@@ -31,6 +31,20 @@ $ conda env create conda/pyroms_export.yaml
 NOTE: Initialization of holoviz from the generic YAML file took over an hour.
 It only took a couple of minutes from the resolved export YAML file.
 
+AND: Sometimes it is faster to slowly bootstrap an environment and then
+capture the result.  This was evidenced when trying to load an enviornment
+surrounding geopandas.
+
+```
+$ conda env create -f gridtools/conda/gridToolsGeopandas.yml
+$ conda activate gridToolsGeopandas
+$ conda install -c conda-forge geopandas
+$ conda install -c conda-forge jupyterlab
+$ conda install -c conda-forge pip matplotlib ipympl cartopy
+$ conda install -c conda-forge netcdf4
+$ conda env export -n gridToolsGeopandas > gridtools/conda/gridToolsGeopandas_export.yml
+```
+
 ## jupyterlab
 
 A jupyterlab can be started for each conda enviroment, but do not attempt

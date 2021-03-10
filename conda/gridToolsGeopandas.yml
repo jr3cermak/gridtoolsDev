@@ -4,13 +4,4 @@ channels:
   - conda-forge
 dependencies:
   - python
-  - numpy
-  - scipy
-  - matplotlib
-  - netcdf4
-  - ipython
-  - jupyterlab
-  - geopandas
   - bokeh
-  - cartopy
-  - pip
