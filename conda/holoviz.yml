@@ -1,0 +1,14 @@
+name: holoviz
+channels:
+  - conda-forge
+  - pyviz
+dependencies:
+  - python
+  - jupyterlab
+  - conda
+  - holoviz
+  # Be sure to install the extension
+  # conda activate holoviz
+  # jupyter labextension install @pyviz/jupyterlab_pyviz
+  # Download examples
+  # holoviz examples

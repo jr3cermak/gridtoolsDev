@@ -127,3 +127,17 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Repo specific information
+# Ignore grid configuration data
+gridTools/configs/
+# Ignore grid configuration data from figshare
+gridTools/figshare/
+# Ignore basemap tiles
+gridTools/tiles
+# Ignore dask engine files
+gridTools/dask-worker-space/
+# Ignore image files
+gridTools/*.jpg
+# Ignore vim swp files
+*.swp

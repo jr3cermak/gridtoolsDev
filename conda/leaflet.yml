@@ -1,0 +1,11 @@
+name: leaflet
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - jupyterlab
+  - ipyleaflet
+  - matplotlib
+  - pygmt
+  - owslib
+  - conda

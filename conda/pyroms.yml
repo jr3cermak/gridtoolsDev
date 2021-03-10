@@ -1,0 +1,23 @@
+name: pyroms
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pip
+  - numpy
+  - scipy
+  - matplotlib
+  - basemap
+  - basemap-data-hires
+  - netcdf4
+  - netcdf-fortran
+  - cftime
+  - lpsolve55
+  - ipython
+  - ipympl
+  - jupyterlab
+  - pip:
+    - -e /home/cermak/src/pyroms/pyroms
+    - -e /home/cermak/src/pyroms/pyroms_toolbox
+    - -e /home/cermak/src/pyroms/bathy_smoother

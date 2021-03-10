@@ -1,0 +1,17 @@
+name: pangeo
+channels:
+  - conda-forge
+dependencies:
+  - dask
+  - jupyterlab>=3.0
+  - dask-jobqueue
+  - xarray
+  - zarr
+  - numcodecs
+  - hvplot
+  - geoviews
+  - datashader
+  - jupyter-server-proxy
+  - widgetsnbextension
+  - dask-labextension
+  - conda

@@ -1,0 +1,14 @@
+name: xgcm
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - xgcm
+  - cartopy
+  - jupyterlab
+  - conda
+  # By default xgcm does not trigger loading of
+  # these packages below
+  - matplotlib
+  - pykdtree
+  - scipy
