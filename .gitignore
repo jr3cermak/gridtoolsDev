@@ -129,15 +129,17 @@ dmypy.json
 .pyre/
 
 # Repo specific information
+# Ignore any data directories
+**/data
 # Ignore grid configuration data
-gridTools/configs/
+**/configs
 # Ignore grid configuration data from figshare
-gridTools/figshare/
+**/figshare
 # Ignore basemap tiles
-gridTools/tiles
+**/tiles
 # Ignore dask engine files
-gridTools/dask-worker-space/
+**/dask-worker-space
 # Ignore image files
-gridTools/*.jpg
+*.jpg
 # Ignore vim swp files
 *.swp

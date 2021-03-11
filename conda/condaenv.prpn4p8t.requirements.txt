@@ -1,0 +1,3 @@
+-e /home/cermak/src/pyroms/pyroms
+-e /home/cermak/src/pyroms/pyroms_toolbox
+-e /home/cermak/src/pyroms/bathy_smoother

@@ -1,6 +1,5 @@
 name: pyroms
 channels:
-  - defaults
   - conda-forge
 dependencies:
   - python=3.8
@@ -17,6 +16,7 @@ dependencies:
   - ipython
   - ipympl
   - jupyterlab
+  - conda
   - pip:
     - -e /home/cermak/src/pyroms/pyroms
     - -e /home/cermak/src/pyroms/pyroms_toolbox

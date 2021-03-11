@@ -1,7 +1,6 @@
 name: pyroms
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
   - backcall=0.2.0=pyh9f0ad1d_0
