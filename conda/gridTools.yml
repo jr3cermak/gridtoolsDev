@@ -1,6 +1,7 @@
-name: gridToolsGeopandas
+name: gridTools
 # Load other packages later
-# geopandas matplotlib ipympl cartopy netcdf4 conda
+# -c conda-forge geopandas matplotlib ipympl cartopy netcdf4 conda
+# FAILED: -c pyviz holoviz
 channels:
   - conda-forge
 dependencies:

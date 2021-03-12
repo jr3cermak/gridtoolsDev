@@ -1,14 +1,18 @@
 name: holoviz
+# NOTE: This is automatically installed
+# jupyter labextension install @pyviz/jupyterlab_pyviz
+# https://github.com/holoviz/geoviews/releases/tag/v1.7.0
+# What seems to work best in jupyter lab at the moment is:
+# geoviews=1.7.0
+# holoviews=1.13.4
 channels:
   - conda-forge
-  - pyviz
 dependencies:
   - python
-  - jupyterlab
+  - datashader
+  - hvplot
+  - geoviews=1.7.0
+  - holoviews=1.13.4
   - conda
-  - holoviz
-  # Be sure to install the extension
-  # conda activate holoviz
-  # jupyter labextension install @pyviz/jupyterlab_pyviz
-  # Download examples
-  # holoviz examples
+  - cartopy
+  - jupyterlab

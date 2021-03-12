@@ -11,6 +11,40 @@ interactive within Jupyter lab.  It may be worthy to continue to operate in seve
 
 https://github.com/nikizadehgfdl/grid_generation/blob/dev/jupynotebooks/regional_grid_spherical.ipynb
 
+Currently targeting a mix of holoviz and bokeh modules.
+
+## Design elements
+
+### Requirements
+
+These are MUST HAVE elements.
+
+The ocean grids are conformal.  This means the angles between the
+horizontal and vertical intersections are 90 degress.
+
+Long term view is to be able to create nested grids within an existing
+global grid.
+
+Must work with these conformal projections:
+ * Mercator
+ * Lambert Conformal Conic
+ * Polar Stereographic
+
+Grid operation:
+ * Set, increase, decrease number of grid points (x, y)
+ * Set, increase, decrease cell size (dx, dy)
+ * Set or unset the requirement that dx = dy
+ * Zoom in/out
+ * Draw, adjust or delete the drawn grid
+
+### Features
+
+This is a list of elements that would be nice to have.
+
+Grid operation:
+ * Adjust the drawn box with a fixed boundary or point
+ * Grid rotation
+
 ## Operational modes
 
 Desired operational modes
