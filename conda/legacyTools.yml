@@ -3,10 +3,10 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - owslib
   - netcdf4
-  - ipyleaflet
   - pygmt
+  - owslib
+  - ipyleaflet
   - jupyterlab
   - matplotlib
   - cartopy

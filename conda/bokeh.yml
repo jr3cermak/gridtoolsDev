@@ -9,6 +9,6 @@ dependencies:
   - geopandas
   - xlrd
   - openpyxl
-  - conda
   - jupyterlab
+  - conda
   - pip

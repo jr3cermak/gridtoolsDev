@@ -3,18 +3,18 @@ channels:
   - conda-forge
 dependencies:
   - python=3.8
-  - numpy
-  - scipy
-  - basemap
-  - basemap-data-hires
   - netcdf4
   - netcdf-fortran
+  - numpy
+  - scipy
   - cftime
   - lpsolve55
   - ipython
   - ipympl
   - jupyterlab
   - matplotlib
+  - basemap
+  - basemap-data-hires
   - conda
   - pip
   - pip:

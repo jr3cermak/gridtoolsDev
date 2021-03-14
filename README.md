@@ -115,6 +115,19 @@ Exporing various data/grid manipulation and visualization options:
 
 # Environments
 
+## Initialization
+
+Initialization times:
+ * bokeh: 9m 17s
+ * gridTools: 11m 47s
+ * legacyTools: 4m 53s
+ * pangeo: 10m 41s
+ * pyroms: 1m 43s
+ * xesmfTools: 5m 5s(!)
+ * xgcmTools: 5m 26s
+
+(!) Requires post installation step to solve environment
+
 ## gridTools
 
 After installing the initial environment, two jupyter lab extensions may need
