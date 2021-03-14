@@ -1,0 +1,15 @@
+name: xesmfTools
+# This follows the pattern on https://github.com/holoviz/geoviews
+channels:
+  - conda-forge
+dependencies:
+  - bokeh>=2.3.0
+  - geoviews>=1.9.1
+  - proj4<6
+  - iris>=2.4.0
+  - xesmf=0.3.0
+  - esmf=7.1.0
+  - esmpy=7.1.0
+  - conda
+  - jupyterlab
+  - pip

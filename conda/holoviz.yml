@@ -5,6 +5,9 @@ name: holoviz
 # What seems to work best in jupyter lab at the moment is:
 # geoviews=1.7.0
 # holoviews=1.13.4
+# datashader=0.12.0 has some bugs
+# Specific bug: https://github.com/holoviz/datashader/pull/991 (6bb4736be8114a9ee83a8884a2b65c5257af2602)
+# Download git repo, cd datashader: pip install -e .
 channels:
   - conda-forge
 dependencies:
@@ -16,3 +19,4 @@ dependencies:
   - conda
   - cartopy
   - jupyterlab
+  - matplotlib

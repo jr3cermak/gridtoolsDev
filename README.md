@@ -6,8 +6,9 @@ One could hope it can be kept generic enough to support any model.
 
 # grid generation
 
-I am currently following an example by Niki Zadeh.  The hope is to make this 
-interactive within Jupyter lab.  It may be worthy to continue to operate in several modes.
+I am currently following an example by Niki Zadeh.  The hope is to
+make this interactive within Jupyter lab.  It may be worthy to continue
+to operate in several modes.
 
 https://github.com/nikizadehgfdl/grid_generation/blob/dev/jupynotebooks/regional_grid_spherical.ipynb
 
@@ -19,11 +20,11 @@ Currently targeting a mix of holoviz and bokeh modules.
 
 These are MUST HAVE elements.
 
-The ocean grids are conformal.  This means the angles between the
-horizontal and vertical intersections are 90 degress.
+The ocean grids are conformal.  This means the angles between the horizontal
+and vertical intersections are 90 degress.
 
-Long term view is to be able to create nested grids within an existing
-global grid.
+Long term view is to be able to create nested grids within an existing global
+grid.
 
 Must work with these conformal projections:
  * Mercator
@@ -61,8 +62,8 @@ YAML specification files for different python environments.
 
 This assumes you have conda/miniconda installed.
 
-There is a generic YAML file that pulls together a development environment. 
-To expidite the conda environment solver, a YAML_export file is also provided for
+There is a generic YAML file that pulls together a development environment.  To
+expidite the conda environment solver, a YAML_export file is also provided for
 quicker recovery of a generic environment.
 
 Initialization:
@@ -85,17 +86,17 @@ capture the result.
 
 Example:
 ```
-$ conda env create -f gridtools/conda/gridToolsGeopandas.yml
-$ conda activate gridToolsGeopandas
-(gridToolsGeopandas) $ conda install -c conda-forge geopandas matplotlib ipympl cartopy netcdf4 conda
-(gridToolsGeopandas) $ conda env export -n gridToolsGeopandas > gridtools/conda/gridToolsGeopandas_export.yml
+$ conda env create -f gridtools/conda/gridTools.yml
+$ conda activate gridTools
+(gridTools) $ conda install -c conda-forge geopandas matplotlib ipympl cartopy netcdf4 conda
+(gridTools) $ conda env export -n gridTools > gridtools/conda/gridTools_export.yml
 ```
 
 You can capture the time it takes to run the creation of an enviroment as well
 as set a timeout so you can tune the YAML file.  In this example, the timeout
 is set to 5 minutes to allow resolution of the environment.
 ```
-$ time timeout 5m conda env create -f gridtools/conda/gridToolsGeopandas.yml
+$ time timeout 5m conda env create -f gridtools/conda/gridTools.yml
 ```
 
 ## gridTools
@@ -114,20 +115,23 @@ Exporing various data/grid manipulation and visualization options:
 
 # Environments
 
-## gridToolsGeopandas
+## gridTools
 
-After installing the initial environment, two jupyter lab extensions need to be installed
-before you can use interactive bokeh elements.
+After installing the initial environment, two jupyter lab extensions may need
+to be installed before you can use interactive bokeh elements.  You can check
+to see if extensions are installed first and install extensions as needed.
 
 ```
-$ conda env create -f gridtools/conda/gridToolsGeopandas.yml
-$ conda activate gridToolsGeopandas
-(gridToolsGeopandas) $ jupyter labextension install @jupyter-widgets/jupyterlab-manager
-(gridToolsGeopandas) $ jupyter labextension install @bokeh/jupyter_bokeh
+$ conda env create -f gridtools/conda/gridTools.yml
+$ conda activate gridTools
+(gridTools) $ jupyter labextension list
+(gridTools) $ jupyter labextension install @jupyter-widgets/jupyterlab-manager
+(gridTools) $ jupyter labextension install @bokeh/jupyter_bokeh
 ```
 
-## leaflet
+## legacyTools
 
+### leaflet
 If panning of maps fails or freezes, it usually requires a full reload of the
 entire web page and the contents of JupyterLab to restore.
 
@@ -143,8 +147,8 @@ $ git clone https://github.com/ESMG/pyroms.git
 # The cloned directory is ${SRC}/pyroms
 ```
 
-Install the pyroms conda environment. This installs the
-appropriate fortran compiler for netcdf.
+Install the pyroms conda environment. This installs the appropriate fortran
+compiler for netcdf.
 
 If you need scrip.so:
 ```
@@ -169,15 +173,15 @@ For now the only known working way to run editmask.py is via:
 $ ipython --pylab
 ```
 
-Cut and paste line by line into the interactive command above.  The last line in
-editmask.py saves any edits made to the grid.
+Cut and paste line by line into the interactive command above.  The last line
+in editmask.py saves any edits made to the grid.
 
-However, this should also work in jupyterlab via ipympl which is untested at the
-moment.
+However, this should also work in jupyterlab via ipympl which is untested at
+the moment.
 
 # jupyterlab
 
-I currently run a Oracle VirtualBox on a MacOS and have the network setting for 
+I currently run a Oracle VirtualBox on a MacOS and have the network setting for
 Adapter 1 set as bridged over the wifi interface (en0).  Doing so, I get a DHCP
 address for my local network at the same level as the MacOS computer.  This allows
 me to use that IP for sharing the jupyter and bokah servers from the VM to a local
@@ -191,11 +195,14 @@ $ conda activate <env>
 (env) $ jupyter lab --ip=192.168.131.54 --no-browser
 ```
 
-A jupyterlab can be started for each conda enviroment, but do not attempt
-to open the same notebook between two jupyterlab instances.  It will do it,
+A jupyterlab can be started for each conda enviroment, but do not attempt to
+open the same notebook between two jupyterlab instances.  It will do it,
 but will cause odd things to happen.
 
-To enable multiple environments, use separate ports via (--port).
+To enable multiple environments, use separate ports via (--port).  It turns out
+jupyterlab is able to figure out other ports are busy and auto increments the
+port number.  Specifying the port number is not necessary unless you want it to
+be really different.
 ```
 (env) $ jupyter lab --ip=192.168.131.34 --port=8889 --no-browser
 ```
@@ -204,7 +211,8 @@ To test bokeh to make sure it can be embedded in a jupyter lab notebook with
 working interactive widgets, use this example script:
 https://github.com/bokeh/bokeh/blob/2.3.0/examples/howto/server_embed/notebook_embed.ipynb
 
-Using the above launching of jupyter lab, the last line of the notebook should be:
+Using the above launching of jupyter lab, the last line of the notebook should
+be:
 ```
 show(bkapp, notebook_url="http://192.168.131.54:8888")
 ```
@@ -214,9 +222,9 @@ gridTools/bokeh/bokehJupyterStandaloneTest.ipynb
 
 ## shortcuts
 
-You can install the shortcuts within JupyterLab web interface through Settings, Advanced
-Setting Editor and Keyboard Shortcuts and edit the "User Preferences" pane.  Or copy
-"shortcuts.jupyterlab-settings" to:
+You can install the shortcuts within JupyterLab web interface through Settings,
+Advanced Setting Editor and Keyboard Shortcuts and edit the "User Preferences"
+pane.  Or copy "shortcuts.jupyterlab-settings" to:
 
 ${HOME}/.jupyter/lab/user-settings/@jupyterlab/shortcuts-extension/shortcuts.jupyterlab-settings
 
@@ -224,5 +232,5 @@ The current shortcuts add two keyboard shortcuts to the notebook editor:
  * Ctrl Shift ArrowUp: move cell up
  * Ctrl Shift ArrowDown: move cell down
 
-You must not be editing the cell. The cell to move must be selected just to the left and is
-denoted by a vertical bar highlighting the cell.
+You must not be editing the cell. The cell to move must be selected just to the
+left and is denoted by a vertical bar highlighting the cell.

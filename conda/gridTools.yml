@@ -1,16 +1,18 @@
 name: gridTools
+# This allows us to create or modify model grids.
+# Use this tool to peform mask editing operations.
+# Use "xesmfTools" to manipulate grid content.
 # Load other packages later
 # -c conda-forge geopandas matplotlib ipympl cartopy netcdf4 conda
-# FAILED: -c pyviz holoviz
 channels:
   - conda-forge
 dependencies:
-  - python
-  - jupyter
-  - jupyterlab>=2,<3
-  - jupyter_bokeh
-  - bokeh
-  - nodejs
+  - geoviews=1.7.0
+  - holoviews=1.13.4
+  - netcdf4
+  - matplotlib
+  - jupyterlab
+  - conda
   - pip
   - pip:
-    - ipywidgets_bokeh
+    - -e /home/cermak/src/datashader

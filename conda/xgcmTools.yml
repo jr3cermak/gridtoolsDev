@@ -1,0 +1,12 @@
+name: xgcmTools
+channels:
+  - conda-forge
+dependencies:
+  - xgcm
+  - cartopy
+  - pykdtree
+  - scipy
+  - jupyterlab
+  - matplotlib
+  - conda
+  - pip

@@ -2,16 +2,17 @@ name: pangeo
 channels:
   - conda-forge
 dependencies:
-  - dask
-  - jupyterlab>=3.0
-  - dask-jobqueue
+  - numcodecs
   - xarray
   - zarr
-  - numcodecs
+  - dask
+  - dask-jobqueue
+  - dask-labextension
   - hvplot
   - geoviews
   - datashader
+  - jupyterlab>=3.0
   - jupyter-server-proxy
   - widgetsnbextension
-  - dask-labextension
   - conda
+  - pip

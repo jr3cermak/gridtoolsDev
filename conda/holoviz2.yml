@@ -1,0 +1,20 @@
+name: holoviz2
+# NOTE: This is automatically installed
+# jupyter labextension install @pyviz/jupyterlab_pyviz
+# Another option:
+# geoviews=1.8.1
+# holoviews=1.13.4
+# Needs datashader fix
+# Still has errors
+# trying pyviz geoviews=1.9.1
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - datashader
+  - hvplot
+  - geoviews=1.8.1
+  - holoviews=1.13.3
+  - conda
+  - cartopy
+  - jupyterlab
