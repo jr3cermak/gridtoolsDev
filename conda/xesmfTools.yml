@@ -2,6 +2,8 @@ name: xesmfTools
 # This follows the pattern on https://github.com/holoviz/geoviews
 # Requires post installation:
 # -c pyviz -c conda-forge netcdf4 geoviews jupyterlab matplotlib
+# cd ${SRC}/datashader
+# pip -e install .
 channels:
   - pyviz
   - conda-forge
