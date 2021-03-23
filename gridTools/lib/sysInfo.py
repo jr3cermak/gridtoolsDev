@@ -1,7 +1,8 @@
 # Small helper class to show basic system information
 # Useful for debugging module/system conflicts
 
-import os, sys
+import os, sys, re
+import psutil
 import shlex, subprocess
 
 class sysInfo:
@@ -117,3 +118,7 @@ class sysInfo:
 
     def show(self, showOnly=[], vList=[]):
         self.showAll(vList=vList)
+
+    def is_lab_notebook(self):
+        return any(re.search('jupyter-lab', x)
+                   for x in psutil.Process().parent().cmdline())
