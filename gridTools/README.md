@@ -3,15 +3,25 @@
 For showing a grid not in its native projection, you have to
 plot every line between grid box nodes to form the vertices.
 
-For a grid to be shown in the native projection, you can simply
-plot from grid point extents to get the bounding box.  You can
-plot from outer grid edges to form the vertices.
+A simple bounding box, extent, may be used for a grid shown
+in its native projection.  You can plot from outer grid edges
+to form the vertices.  This also seems to hold true for tilted
+grids in Lambert Conformal Conic.
+
+# Grid examples
+
+## Niki's example
+
+The code creates a grid in spherical coordinates.  It appears the final
+grid is in Lambert Conformal Conic.  The code allows a tilt to be provided
+as input.
 
 ## Arctic6
 
 This grid is North Polar Stereo.
 This grid has a central longitude of 160.0 West.
 The true scale latitude is unknown.  Kate thinks it might be 90N?
+Having true scale latitude unset for plotting seems to work.
 
 ## NEP7
 
@@ -19,7 +29,7 @@ This grid is Lambert Conformal Conic.
 The LCC attributes are:
     Standard parallel latitudes: 40.0 and 60.0 North
     Central longitude: 91.0 West
-    Central longitude: unknown
+    Central latitude: unknown (seems ok for plotting)
 
 # Other grids
 

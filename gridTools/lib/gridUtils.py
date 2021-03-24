@@ -16,8 +16,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import netCDF4 as nc
 
-# For use with python notebooks
-#%matplotlib inline
+# Required for ROMS->MOM6 conversion
+import Spherical
 
 class gridUtils:
 
@@ -31,12 +31,15 @@ class gridUtils:
         self.debugLevel = 0
         self.verboseLevel = 0
         # Grid variables
+        self.grid = {}
+        self.grid['dims'] = {}
         self.gridX = None
         self.gridY = None
         # matplotlib plot extent
         # degrees: [minLon, maxLon, minLat, maxLat]
         self.gridExtent = []
         self.gridParameters = {}
+        self.gridParameterKeys = self.gridParameters.keys()
         self.gridShape = None
         self.resetGridParameters()
         # Plotting controls
@@ -52,25 +55,31 @@ class gridUtils:
     # Grid operations
     
     def resetGrid(self):
+        self.grid = {}
+        self.grid['dims'] = {}
         self.gridX = None
         self.gridY = None
         self.gridShape = None
-        self.gridExtent = []
+        self.grid['meta'] = {}
 
     def makeGrid(self):
         '''Using supplied grid parameters, populate a grid in memory.'''
-        if self.gridParameters['gridProjection'] == 'Mercator':
-            #lamc, phic = grd.generate_regional_spherical(lon0, lon_span, lat0, lat_span, tilt, refineR*refineS)
+        if self.gridParameters['gridProjection'] == 'LambertConformalConicTilt':
             lonGrid, latGrid = self.generate_regional_spherical(
                 self.gridParameters['lonGridCenter'], self.gridParameters['lonSpan'],
                 self.gridParameters['latGridCenter'], self.gridParameters['latSpan'],
                 self.gridParameters['gridTilt'],
                 self.gridParameters['nominalResolution'] * self.gridParameters['nominalSpacing']
             )
-            #grd.mesh_plot(lamc, phic, lon0, lat0)
             self.gridX = lonGrid
             self.gridY = latGrid
             self.gridShape = lonGrid.shape
+            # This technique seems to return a Lambert Conformal Projection with the following properties
+            self.gridParameters['projLon0'] = self.gridParameters['lonGridCenter']
+            # This only works if the grid does not overlap a polar point
+            # (latGridCenter - (latSpan/2), latGridCenter + (latSpan/2))
+            self.gridParameters['projLat1'] = self.gridParameters['latGridCenter'] - (self.gridParameters['latSpan'] / 2.0)
+            self.gridParameters['projLat2'] = self.gridParameters['latGridCenter'] + (self.gridParameters['latSpan'] / 2.0)
     
     # Original functions provided by Niki Zadeh
     # Grid creation and rotation in spherical coordinates
@@ -181,7 +190,7 @@ class gridUtils:
     
     def generate_latlon_mesh_centered(self, lni, lnj, llon0, llen_lon, llat0, llen_lat, ensure_nj_even=True):
         """Generate a regular lat-lon grid"""
-        self.printVerbose('Generating regular lat-lon grid between centered at %.2f %.2f' % (llon0, llat0))
+        self.printVerbose('Generating regular lat-lon grid centered at %.2f %.2f on equator.' % (llon0, llat0))
         llonSP = llon0 - llen_lon/2 + np.arange(lni+1) * llen_lon/float(lni)
         llatSP = llat0 - llen_lat/2 + np.arange(lnj+1) * llen_lat/float(lnj)
         if(llatSP.shape[0]%2 == 0 and ensure_nj_even):
@@ -189,8 +198,8 @@ class gridUtils:
             llatSP = np.delete(llatSP,0,0)
         llamSP = np.tile(llonSP,(llatSP.shape[0],1))
         lphiSP = np.tile(llatSP.reshape((llatSP.shape[0],1)),(1,llonSP.shape[0]))
-        self.printVerbose('   generated regular lat-lon grid between latitudes %.2f %.2f' % (lphiSP[0,0],lphiSP[-1,0]))
-        self.printVerbose('   number of js=%d' % (lphiSP.shape[0]))
+        self.printVerbose('   Generated regular lat-lon grid between latitudes %.2f %.2f' % (lphiSP[0,0],lphiSP[-1,0]))
+        self.printVerbose('   Number of js=%d' % (lphiSP.shape[0]))
         #h_i_inv=llen_lon*self.PI_180*np.cos(lphiSP*self.PI_180)/lni
         #h_j_inv=llen_lat*self.PI_180*np.ones(lphiSP.shape)/lnj
         #delsin_j = np.roll(np.sin(lphiSP*self.PI_180),shift=-1,axis=0) - np.sin(lphiSP*self.PI_180)
@@ -209,7 +218,8 @@ class gridUtils:
         lam_,phi_ = self.rotate_z_mesh(lam_,phi_, (90.-lon0)*self.PI_180)  #rotate around z to bring it centered at y axis
         lam_,phi_ = self.rotate_y_mesh(lam_,phi_,tilt*self.PI_180)         #rotate around y axis to tilt it as desired
         lam_,phi_ = self.rotate_x_mesh(lam_,phi_,lat0*self.PI_180)         #rotate around x to bring it centered at (lon0,lat0)
-        lam_,phi_ = self.rotate_z_mesh(lam_,phi_,-(90.-lon0)*self.PI_180)  #rotate around z to bring it back 
+        lam_,phi_ = self.rotate_z_mesh(lam_,phi_,-(90.-lon0)*self.PI_180)  #rotate around z to bring it back
+                
         return lam_,phi_
 
     # Grid generation functions
@@ -461,7 +471,16 @@ class gridUtils:
         for k in pDict.keys():
             self.gridParameters[k] = pDict[k]
             
-        self.gridParameterKeys = self.gridParameters.keys()    
+        self.gridParameterKeys = self.gridParameters.keys()
+     
+    def showGridParameters(self):
+        """Sometimes after a makeGrid() operation, new parameters are placed into the dictionary."""
+        if len(self.gridParameterKeys) > 0:
+            print("Current grid parameters:")
+            for k in self.gridParameterKeys:
+                print("%20s: %s" % (k,self.gridParameters[k]))
+        else:
+            print("No grid parameters found.")
     
     # Plot parameter operations
         
@@ -495,3 +514,9 @@ class gridUtils:
             self.plotParameters[k] = pDict[k]
             
         self.plotParameterKeys = self.plotParameters.keys()
+
+    # Functions from pyroms/examples/grid_MOM6/convert_ROMS_grid_to_MOM6.py
+    # Attribution: Mehmet Ilicak via Alistair Adcroft
+    # Requires Spherical.py (copied to local lib)
+    # Based on code written by Alistair Adcroft and Matthew Harrison of GFDL
+    
