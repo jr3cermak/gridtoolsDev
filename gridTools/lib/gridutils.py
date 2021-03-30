@@ -7,10 +7,11 @@
 #      [DONE] Requires refactoring subplot to subsplots. See: https://towardsdatascience.com/plt-subplot-or-plt-subplots-understanding-state-based-vs-object-oriented-programming-in-pyplot-4ba0c7283f5d
 #      [X] Another good example: https://unidata.github.io/MetPy/latest/examples/Four_Panel_Map.html
 #   [DONE] Allow display of important messages and warnings in panel application
-#   [] Further consolidate matplotlib code
+#   [DONE] Refactor code to use xarray Dataset structures so to_netcdf() can be used for serialization
+#   [] Further consolidate matplotlib plotting code
+#      [] Refactor plotting code.  It is mostly the same except for setting the projection.
 #   [] Do we have to declare everything in __init__ first or can be push all that to respective reset/clear functions?
 #   [] refactor refineS and refineR options as Niki had them defined
-#   [] readGrid() and makeGrid() make use of xarray structures instead so we can utilize to_netcdf() serialization
 #   [] Pass back an error graphic instead of None for figures that do not render
 #   [] Add a formal logging/message mechanism.
 #      [] Move all this to options.  Interact with message buffer.
@@ -21,7 +22,6 @@
 #   [] For now, the gridParameters are always in reference to a center point in a grid
 #     in the future, one may fix a side or point of the grid and grow out from that point
 #     instead of the center.
-#   [] Refactor plotting code.  It is mostly the same except for setting the projection.
 #   [] makeGrid assumes degrees at this point.
 #   [] grid reading and plot parameter defaults should be dynamic with grid type declaration and potentially
 #      split out into separate library modules? lib/gridTools/grids/{MOM6,ROMS,WRF}
@@ -52,24 +52,23 @@ class GridUtils:
         self.PI_180 = np.pi/180.
         self._default_Re = 6.378e6
         # File pointer
-        self.ncfp = None
+        self.xrOpen = False
+        self.xrDS = xr.Dataset()
+        self.grid = self.xrDS
         # Internal parameters
         self.usePaneMatplotlib = False
-        self.matplotlibImports = False
         # Debugging/logging
         self.debugLevel = 0
         self.verboseLevel = 0
-        # Grid 
-        self.grid = {}
         # Private variables begin with a _
         # Grid parameters
-        self.grid['_meta'] = {}
-        self.grid['_meta']['dimensions'] = {}
-        self.grid['_meta']['gridParameters'] = {}
-        self.grid['_meta']['gridParameterKeys'] = self.grid['_meta']['gridParameters'].keys()
+        self.gridInfo = {}
+        self.gridInfo['dimensions'] = {}
+        self.gridInfo['gridParameters'] = {}
+        self.gridInfo['gridParameterKeys'] = self.gridInfo['gridParameters'].keys()
         # Defaults
         self.plotParameterDefaults = {
-            'figsize': (6.4, 4.8),
+            'figsize': (8, 6),
             'extent': [],
             'extentCRS': cartopy.crs.PlateCarree(),
             'projection': {
@@ -79,8 +78,8 @@ class GridUtils:
             'showSupergrid': False
         }          
         # Plot parameters
-        self.grid['_meta']['plotParameters'] = self.plotParameterDefaults
-        self.grid['_meta']['plotParameterKeys'] = self.grid['_meta']['plotParameters'].keys()
+        self.gridInfo['plotParameters'] = self.plotParameterDefaults
+        self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
                
     # Utility functions
     
@@ -145,36 +144,53 @@ class GridUtils:
         '''Call this when you want to erase the current grid and grid parameters.  This also
         clobbers any current plot parameters.
         Do not call this method between plots of the same grid.'''
-        self.grid = {}
-        self.grid['_meta'] = {}
-        self.grid['_meta']['dimensions'] = {}
+        
+        # If there are file resources open, close them first.
+        if self.xrOpen:
+            self.closeDataset()
+        
+        self.xrDS = xr.Dataset()
+        self.grid = self.xrDS
+        self.gridInfo = {}
+        self.gridInfo['dimensions'] = {}
         self.clearGridParameters()
         self.resetPlotParameters()
         
     def makeGrid(self):
         '''Using supplied grid parameters, populate a grid in memory.'''
-        if self.grid['_meta']['gridParameters']['projection']['name'] == 'LambertConformalConic':
+        if self.gridInfo['gridParameters']['projection']['name'] == 'LambertConformalConic':
             # Sometimes tilt may not be specified, so use a default of 0.0
-            if 'tilt' in self.grid['_meta']['gridParameters'].keys():
-                tilt = self.grid['_meta']['gridParameters']['tilt']
+            if 'tilt' in self.gridInfo['gridParameters'].keys():
+                tilt = self.gridInfo['gridParameters']['tilt']
             else:
                 tilt = 0.0
             lonGrid, latGrid = self.generate_regional_spherical(
-                self.grid['_meta']['gridParameters']['projection']['lon_0'], self.grid['_meta']['gridParameters']['dx'],
-                self.grid['_meta']['gridParameters']['projection']['lat_0'], self.grid['_meta']['gridParameters']['dy'],
+                self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
+                self.gridInfo['gridParameters']['projection']['lat_0'], self.gridInfo['gridParameters']['dy'],
                 tilt,
-                self.grid['_meta']['gridParameters']['gridResolution'] * self.grid['_meta']['gridParameters']['gridMode']
+                self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
             )
-            self.grid['x'] = lonGrid
-            self.grid['y'] = latGrid
-            self.grid['_meta']['shape'] = lonGrid.shape
+            
+            # Convert to xarray
+            #self.grid['x'] = lonGrid
+            #self.grid['y'] = latGrid
+            (nxp, nyp) = lonGrid.shape
+            
+            self.grid['x'] = (('nyp','nxp'), lonGrid)
+            self.grid['y'] = (('nyp','nxp'), latGrid)
+            
+            self.xrOpen = True
+            
+            #self.grid.coords['nyp'] = ('nyp', nyp)
+            #self.grid.coords['nxp'] = ('nxp', nxp)
+        
             # This technique seems to return a Lambert Conformal Projection with the following properties
             # This only works if the grid does not overlap a polar point
             # (lat_0 - (dy/2), lat_0 + (dy/2))
-            self.grid['_meta']['gridParameters']['projection']['lat_1'] =\
-                self.grid['_meta']['gridParameters']['projection']['lat_0'] - (self.grid['_meta']['gridParameters']['dy'] / 2.0)
-            self.grid['_meta']['gridParameters']['projection']['lat_2'] =\
-                self.grid['_meta']['gridParameters']['projection']['lat_0'] + (self.grid['_meta']['gridParameters']['dy'] / 2.0)
+            self.gridInfo['gridParameters']['projection']['lat_1'] =\
+                self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
+            self.gridInfo['gridParameters']['projection']['lat_2'] =\
+                self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
     
     # Original functions provided by Niki Zadeh - Lambert Conformal Conic grids
     # Grid creation and rotation in spherical coordinates
@@ -321,62 +337,88 @@ class GridUtils:
 
     # Grid generation functions
     
-    # netCDF operations
+    # xarray Dataset operations
     
     def closeDataset(self):
         '''Closes and open dataset file pointer.'''
-        if self.ncfp:
-            self.ncfp.close()
-            self.ncfp = None
+        if self.xrOpen:
+            self.xrDS.close()
+            self.xrOpen = False
             
     def openDataset(self, inputFilename):
-        '''Open a netCDF4 grid file.  The file pointer is internal to the object.
-        To access it, use: obj.ncfp'''
+        '''Open a grid file.  The file pointer is internal to the object.
+        To access it, use: obj.xrDS'''
         # check if we have a vailid inputFilename
         if not(os.path.isfile(inputFilename)):
             self.printVerbose("Dataset not found: %s" % (inputFilename))
             return
                 
         # If we have a file pointer and it is open, close it and re-open the new file
-        if self.ncfp:
-            if self.ncfp.isopen():
-                self.ncfp.close()
-        
-        self.ncfp = nc.Dataset(inputFilename, mode='r')
+        if self.xrOpen:
+            self.closeDataset()
             
-    def readGrid(self, opts={'type': 'MOM6'}):
-        '''Read a grid.'''
-        '''This can be generalized to work with "other" grids if we desired? (ROMS, HyCOM, etc)'''
-        if self.ncfp:
-            if opts['type'] == 'MOM6':
-                # Load dims
-                # Get the grid shape from the dimensions instead of the shape of a variable
-                for dimKey in self.ncfp.dimensions:
-                    self.grid['_meta']['dimensions'][dimKey] = self.ncfp.dimensions[dimKey].size
-                
-                self.grid['_meta']['shape'] = (
-                    self.grid['_meta']['dimensions']['nyp'], self.grid['_meta']['dimensions']['nxp']
-                )
-                
-                # Load variables ['lons', 'lats']
-                read_variables = ['x','y']
-                for var in read_variables:
-                    self.grid[var] = self.ncfp.variables[var][:][:]
+        try:
+            self.xrDS = xr.open_dataset(inputFilename)
+            self.xrOpen = True
+        except:
+            if self.verboseLevel > 0:
+                self.printVerbose("WARNING: Unable to load dataset: %s" % (inputFilename))
+            self.xrDS = None
+            self.xrOpen = False
+            # Error failed to load file
+            if self.debugLevel > 0:
+                raise
+            
+    def readGrid(self, opts={'type': 'MOM6'}, local=None):
+        '''Read a grid.
+        
+        This can be generalized to work with "other" grids if we desired? (ROMS, HyCOM, etc)
+        '''
+        # if a dataset is being loaded via readGrid(local=), close any existing dataset
+        if local:
+            if self.xrOpen:
+                self.closeDataset()
+            self.xrOpen = True
+            self.xrDS = local
+            self.grid = local
+        else:
+            if self.xrOpen:
+                if opts['type'] == 'MOM6':
+                    # Load dims
+                    # Get the grid shape from the dimensions instead of the shape of a variable
+                    #for dimKey in self.ncfp.dimensions:
+                    #    self.gridInfo['dimensions'][dimKey] = self.ncfp.dimensions[dimKey].size
 
-                # Save grid metadata
-                self.grid["_meta"]['type'] = opts['type']
-                # This method of computing the extent is subject to problems
-                self.grid["_meta"]["extent"] = [
-                    self.grid['x'].min(), self.grid['x'].max(), self.grid['y'].min(), self.grid['y'].max()
-                ]
+                    #self.gridInfo['shape'] = (
+                    #    self.gridInfo['dimensions']['nyp'], self.gridInfo['dimensions']['nxp']
+                    #)
+
+                    # Load variables ['lons', 'lats']
+                    #read_variables = ['x','y']
+                    #for var in read_variables:
+                    #    self.grid[var] = self.ncfp.variables[var][:][:]
+                    #self.grid['xr'] = self.xrDS
+
+                    # Save grid metadata
+                    self.gridInfo['type'] = opts['type']
+                    # This method of computing the extent is subject to problems
+                    #self.gridInfo["extent"] = [
+                    #    self.grid['x'].min(), self.grid['x'].max(), self.grid['y'].min(), self.grid['y'].max()
+                    #]
+                    self.grid = self.xrDS
     
     # Plotting specific functions
     # These functions should not care what grid is loaded. 
     # Plotting is affected by plotParameters and gridParameters.
 
-    def newFigure(self, figsize=(8,6)):
+    def newFigure(self, figsize=None):
         '''Establish a new matplotlib figure.'''
-                     
+        
+        if figsize:
+            figsize = self.getPlotParameter('figsize', default=figsize)             
+        else:
+            figsize = self.getPlotParameter('figsize', default=self.plotParameterDefaults['figsize'])
+            
         fig = Figure(figsize=figsize)
         
         return fig
@@ -402,9 +444,9 @@ class GridUtils:
         >>> grd.plotGrid()
         '''
         
-        if not('shape' in self.grid['_meta'].keys()):
-            warnings.warn("Unable to plot the grid.  Missing its 'shape'.")
-            return (None, None)
+        #if not('shape' in self.gridInfo.keys()):
+        #    warnings.warn("Unable to plot the grid.  Missing its 'shape'.")
+        #    return (None, None)
         
         plotProjection = self.getPlotParameter('name', subKey='projection', default=None)
         
@@ -428,9 +470,7 @@ class GridUtils:
     def plotGridLambertConformalConic(self):
         '''Plot a given mesh using Lambert Conformal Conic projection.'''
         '''Requires: central_latitude, central_longitude and two standard parallels (latitude).'''
-        figsize = self.getPlotParameter('figsize', default=(8,8))
-        #f = plt.figure(figsize=figsize)
-        f = self.newFigure(figsize=figsize)
+        f = self.newFigure()
         central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=-96.0)
         central_latitude = self.getPlotParameter('lat_0', subKey='projection', default=39.0)
         lat_1 = self.getPlotParameter('lat_1', subKey='projection', default=33.0)
@@ -439,10 +479,6 @@ class GridUtils:
         crs = cartopy.crs.LambertConformal(
                 central_longitude=central_longitude, central_latitude=central_latitude,
                 standard_parallels=standard_parallels)
-        #ax = plt.subplot(111, 
-        #    projection=cartopy.crs.LambertConformal(
-        #        central_longitude=central_longitude, central_latitude=central_latitude,
-        #        standard_parallels=standard_parallels))
         ax = f.subplots(subplot_kw={'projection': crs})
         mapExtent = self.getPlotParameter('extent', default=[])
         mapCRS = self.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
@@ -456,7 +492,8 @@ class GridUtils:
         title = self.getPlotParameter('title', default=None)
         if title:
             ax.set_title(title)
-        (nj,ni) = self.grid['_meta']['shape']
+        nj = self.grid.dims['nyp']
+        ni = self.grid.dims['nxp']
         plotAllVertices = self.getPlotParameter('showGridCells', default=False)
         iColor = self.getPlotParameter('iColor', default='k')
         jColor = self.getPlotParameter('jColor', default='k')
@@ -476,15 +513,10 @@ class GridUtils:
 
     def plotGridMercator(self):
         '''Plot a given mesh using Mercator projection.'''
-        figsize = self.getPlotParameter('figsize', default=(8,8))
-        #f = plt.figure(figsize=figsize)
-        f = self.newFigure(figsize=figsize)
+        f = self.newFigure()
         central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
         crs = cartopy.crs.Mercator(
                 central_longitude=central_longitude)
-        #ax = plt.subplot(111, 
-        #    projection=cartopy.crs.Mercator(
-        #        central_longitude=central_longitude))
         ax = f.subplots(subplot_kw={'projection': crs})
         mapExtent = self.getPlotParameter('extent', default=[])
         mapCRS = self.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
@@ -498,7 +530,8 @@ class GridUtils:
         title = self.getPlotParameter('title', default=None)
         if title:
             ax.set_title(title)
-        (nj,ni) = self.grid['_meta']['shape']
+        nj = self.grid.dims['nyp']
+        ni = self.grid.dims['nxp']
         plotAllVertices = self.getPlotParameter('showGridCells', default=False)
         iColor = self.getPlotParameter('iColor', default='k')
         jColor = self.getPlotParameter('jColor', default='k')
@@ -519,16 +552,11 @@ class GridUtils:
     
     def plotGridNearsidePerspective(self):
         """Plot a given mesh using the nearside perspective centered at (central_longitude,central_latitude)"""
-        figsize = self.getPlotParameter('figsize', default=(8,8))
-        #f = plt.figure(figsize=figsize)
-        f = self.newFigure(figsize=figsize)
+        f = self.newFigure()
         central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
         central_latitude = self.getPlotParameter('lat_0', subKey='projection', default=90.0)
         satellite_height = self.getPlotParameter('satellite_height', default=35785831)
         crs = cartopy.crs.NearsidePerspective(central_longitude=central_longitude, central_latitude=central_latitude, satellite_height=satellite_height)
-        #ax = f.subplots(111, 
-        #    projection=cartopy.crs.NearsidePerspective(
-        #        central_longitude=central_longitude, central_latitude=central_latitude, satellite_height=satellite_height))
         ax = f.subplots(subplot_kw={'projection': crs})
         if self.usePaneMatplotlib:
             FigureCanvas(f)
@@ -544,7 +572,8 @@ class GridUtils:
         title = self.getPlotParameter('title', default=None)
         if title:
             ax.set_title(title)
-        (nj,ni) = self.grid['_meta']['shape']
+        nj = self.grid.dims['nyp']
+        ni = self.grid.dims['nxp']
         plotAllVertices = self.getPlotParameter('showGridCells', default=False)
         iColor = self.getPlotParameter('iColor', default='k')
         jColor = self.getPlotParameter('jColor', default='k')
@@ -556,23 +585,19 @@ class GridUtils:
         # For a non conforming projection, we have to plot every line between the points of each grid box
         for i in range(0,ni+1,2):
             if (i == 0 or i == (ni-1)) or plotAllVertices:
-                ax.plot(self.grid['x'][:,i], self.grid['y'][:,i], iColor, linewidth=iLinewidth, transform=transform)
+                ax.plot(self.grid.x[:,i], self.grid.y[:,i], iColor, linewidth=iLinewidth, transform=transform)
         for j in range(0,nj+1,2):
             if (j == 0 or j == (nj-1)) or plotAllVertices:
-                ax.plot(self.grid['x'][j,:], self.grid['y'][j,:], jColor, linewidth=jLinewidth, transform=transform)
+                ax.plot(self.grid.x[j,:], self.grid.y[j,:], jColor, linewidth=jLinewidth, transform=transform)
                 
         return f, ax
         
     def plotGridNorthPolarStereo(self):
         '''Generic plotting function for North Polar Stereo maps'''
-        figsize = self.getPlotParameter('figsize', default=(8,8))
-        #f = plt.figure(figsize=figsize)
-        f = self.newFigure(figsize=figsize)
+        f = self.newFigure()
         central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
         true_scale_latitude = self.getPlotParameter('lat_ts', subKey='projection', default=75.0)
         crs = cartopy.crs.NorthPolarStereo(central_longitude=central_longitude, true_scale_latitude=true_scale_latitude)
-        #ax = plt.subplot(111, projection=
-        #    cartopy.crs.NorthPolarStereo(central_longitude=central_longitude, true_scale_latitude=true_scale_latitude))
         ax = f.subplots(subplot_kw={'projection': crs})
         mapExtent = self.getPlotParameter('extent', default=[])
         mapCRS = self.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
@@ -586,7 +611,8 @@ class GridUtils:
         title = self.getPlotParameter('title', default=None)
         if title:
             ax.set_title(title)
-        (nj,ni) = self.grid['_meta']['shape']
+        nj = self.grid.dims['nyp']
+        ni = self.grid.dims['nxp']
         plotAllVertices = self.getPlotParameter('showGridCells', default=False)
         iColor = self.getPlotParameter('iColor', default='k')
         jColor = self.getPlotParameter('jColor', default='k')
@@ -608,38 +634,38 @@ class GridUtils:
 
     def clearGridParameters(self):
         '''Clear grid parameters.  This does not erase any grid data.'''
-        self.grid['_meta']['gridParameters'] = {}
-        self.grid['_meta']['gridParameterKeys'] = self.grid['_meta']['gridParameters'].keys()
+        self.gridInfo['gridParameters'] = {}
+        self.gridInfo['gridParameterKeys'] = self.gridInfo['gridParameters'].keys()
         
     def deleteGridParameters(self, gList, subKey=None):
         """This deletes a given list of grid parameters."""
         
         # Top level subkeys
         if subKey:
-            if subKey in self.grid['_meta']['gridParameterKeys']:
-                subKeys = self.grid['_meta'][subKey].keys()
+            if subKey in self.gridInfo['gridParameterKeys']:
+                subKeys = self.gridInfo[subKey].keys()
                 for k in gList:
                     if k in subKeys:
-                        self.grid['_meta'][subKey].pop(k, None)
+                        self.gridInfo[subKey].pop(k, None)
             return
         
         # Top level keys
         for k in gList:
-            if k in self.grid['_meta']['gridParameterKeys']:
-                self.self.grid['_meta']['gridParameters'].pop(k, None)
+            if k in self.gridInfo['gridParameterKeys']:
+                self.self.gridInfo['gridParameters'].pop(k, None)
                             
-        self.grid['_meta']['gridParameterKeys'] = self.grid['_meta']['gridParameters'].keys()
+        self.gridInfo['gridParameterKeys'] = self.gridInfo['gridParameters'].keys()
 
     def getGridParameter(self, gkey, subKey=None, default=None):
         '''Return the requested grid parameter or the default if none is available.'''
         if subKey:
-            if subKey in self.grid['_meta']['gridParameterKeys']:
-                if gkey in self.grid['_meta']['gridParameters'][subKey].keys():
-                    return self.grid['_meta']['gridParameters'][subKey][gkey]
+            if subKey in self.gridInfo['gridParameterKeys']:
+                if gkey in self.gridInfo['gridParameters'][subKey].keys():
+                    return self.gridInfo['gridParameters'][subKey][gkey]
             return default
         
-        if gkey in self.grid['_meta']['gridParameterKeys']:
-            return self.grid['_meta']['gridParameters'][gkey]
+        if gkey in self.gridInfo['gridParameterKeys']:
+            return self.gridInfo['gridParameters'][gkey]
         
         return default
         
@@ -705,23 +731,23 @@ class GridUtils:
         # by the respective makeGrid functions.
         for k in gridParameters.keys():
             if subKey:
-                self.grid['_meta']['gridParameters'][subKey][k] = gridParameters[k]
+                self.gridInfo['gridParameters'][subKey][k] = gridParameters[k]
             else:
-                self.grid['_meta']['gridParameters'][k] = gridParameters[k]
+                self.gridInfo['gridParameters'][k] = gridParameters[k]
         
         if not(subKey):
-            self.grid['_meta']['gridParameterKeys'] = self.grid['_meta']['gridParameters'].keys()
+            self.gridInfo['gridParameterKeys'] = self.gridInfo['gridParameters'].keys()
 
     def showGridMetadata(self):
         """Show current grid metadata."""
-        print(self.grid['_meta'])
+        print(self.gridInfo)
             
     def showGridParameters(self):
         """Show current grid parameters."""
-        if len(self.grid['_meta']['gridParameterKeys']) > 0:
+        if len(self.gridInfo['gridParameterKeys']) > 0:
             print("Current grid parameters:")
-            for k in self.grid['_meta']['gridParameterKeys']:
-                print("%20s: %s" % (k,self.grid['_meta']['gridParameters'][k]))
+            for k in self.gridInfo['gridParameterKeys']:
+                print("%20s: %s" % (k,self.gridInfo['gridParameters'][k]))
         else:
             print("No grid parameters found.")
     
@@ -732,19 +758,19 @@ class GridUtils:
         
         # Top level subkeys
         if subKey:
-            if subKey in self.grid['_meta']['plotParameterKeys']:
-                subKeys = self.grid['_meta'][subKey].keys()
+            if subKey in self.gridInfo['plotParameterKeys']:
+                subKeys = self.gridInfo[subKey].keys()
                 for k in pList:
                     if k in subKeys:
-                        self.grid['_meta'][subKey].pop(k, None)
+                        self.gridInfo[subKey].pop(k, None)
             return
 
         # Top level keys
         for k in pList:
-            if k in self.grid['_meta']['plotParameterKeys']:
-                self.self.grid['_meta']['plotParameters'].pop(k, None)
+            if k in self.gridInfo['plotParameterKeys']:
+                self.self.gridInfo['plotParameters'].pop(k, None)
                 
-        self.grid['_meta']['plotParameterKeys'] = self.grid['_meta']['plotParameters'].keys()
+        self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
 
     def getPlotParameter(self, pkey, subKey=None, default=None):
         '''Return the requested plot parameter or the default if none is available.
@@ -754,25 +780,25 @@ class GridUtils:
         
         # Top level subkey access
         if subKey:
-            if subKey in self.grid['_meta']['plotParameterKeys']:
+            if subKey in self.gridInfo['plotParameterKeys']:
                 try:
-                    if pkey in self.grid['_meta']['plotParameters'][subKey].keys():
-                        return self.grid['_meta']['plotParameters'][subKey][pkey]
+                    if pkey in self.gridInfo['plotParameters'][subKey].keys():
+                        return self.gridInfo['plotParameters'][subKey][pkey]
                 except:
                     warnings.warn("Attempt to use a subkey(%s) which is not really a subkey? or maybe it should be?" % (subKey))
             return default
         
         # Top level key access
-        if pkey in self.grid['_meta']['plotParameterKeys']:
-            return self.grid['_meta']['plotParameters'][pkey]
+        if pkey in self.gridInfo['plotParameterKeys']:
+            return self.gridInfo['plotParameters'][pkey]
         
         return default
 
     def resetPlotParameters(self):
         '''Resets plot parameters for a grid.'''
         # Need to use .copy on plotParameterDefaults or we get odd results
-        self.grid['_meta']['plotParameters'] = self.plotParameterDefaults.copy()
-        self.grid['_meta']['plotParameterKeys'] = self.grid['_meta']['plotParameters'].keys()
+        self.gridInfo['plotParameters'] = self.plotParameterDefaults.copy()
+        self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
     
     def setPlotParameters(self, plotParameters, subKey=None):
         """A generic method for setting plotting parameters using dictionary arguments.
@@ -827,17 +853,17 @@ class GridUtils:
         # by the respective plotGrid* fuctions.
         for k in plotParameters.keys():
             if subKey:
-                self.grid['_meta']['plotParameters'][subKey][k] = plotParameters[k]
+                self.gridInfo['plotParameters'][subKey][k] = plotParameters[k]
             else:
                 try:
-                    self.grid['_meta']['plotParameters'][k] = plotParameters[k]
+                    self.gridInfo['plotParameters'][k] = plotParameters[k]
                 except:
                     if self.debugLevel > 0:
                         pdb.set_trace()
                     raise
 
         if not(subKey):
-            self.grid['_meta']['plotParameterKeys'] = self.grid['_meta']['plotParameters'].keys()
+            self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
 
     # Functions from pyroms/examples/grid_MOM6/convert_ROMS_grid_to_MOM6.py
     # Attribution: Mehmet Ilicak via Alistair Adcroft
