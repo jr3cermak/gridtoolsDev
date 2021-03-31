@@ -158,6 +158,7 @@ dependencies:
   - nbclient=0.5.3=pyhd8ed1ab_0
   - nbconvert=6.0.7=py37h89c1867_3
   - nbformat=5.1.2=pyhd8ed1ab_1
+  - nbserverproxy
   - ncurses=6.2=h58526e2_4
   - nest-asyncio=1.4.3=pyhd8ed1ab_0
   - netcdf-fortran=4.5.3=mpi_mpich_h7ad8bfe_1
