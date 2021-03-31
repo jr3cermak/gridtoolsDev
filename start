@@ -1,2 +1,2 @@
 export LIBROOT=$(HOME)/gridTools/lib
-start "$@"
+exec "$@"
