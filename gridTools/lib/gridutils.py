@@ -223,8 +223,10 @@ class GridUtils:
         # Approximate edge lengths as great arcs
         self.grid['dx'] = (('nyp', 'nx'),  R * Spherical.angle_through_center( (lat[ :,1:],lon[ :,1:]), (lat[:  ,:-1],lon[:  ,:-1]) ))
         self.grid.dx.attrs['units'] = 'meters'
+        self.grid.dx.encoding['_FillValue'] = False
         self.grid['dy'] = (('ny' , 'nxp'), R * Spherical.angle_through_center( (lat[1:, :],lon[1:, :]), (lat[:-1,:  ],lon[:-1,:  ]) ))
         self.grid.dy.attrs['units'] = 'meters'
+        self.grid.dy.encoding['_FillValue'] = False
         
         # Scaling by latitude?
         cos_lat = np.cos(np.radians(lat))
@@ -238,9 +240,11 @@ class GridUtils:
         angle_dx[:,-1  ] = np.arctan2( (lat[:,-1] - lat[:,-2 ]) , ((lon[:,-1] - lon[:,-2 ]) * cos_lat[:,-1  ]) )
         self.grid['angle_dx'] = (('nyp', 'nxp'), angle_dx)
         self.grid.angle_dx.attrs['units'] = 'radians'
+        self.grid.angle_dx.encoding['_FillValue'] = False
         
         self.grid['area'] = (('ny','nx'), R * R * Spherical.quad_area(lat, lon))
         self.grid.area.attrs['units'] = 'meters^2'
+        self.grid.area.encoding['_FillValue'] = False
 
         return
         
@@ -259,24 +263,20 @@ class GridUtils:
                 self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
             )
             
-            # Convert to xarray
-            #self.grid['x'] = lonGrid
-            #self.grid['y'] = latGrid
             (nxp, nyp) = lonGrid.shape
             
             self.grid['x'] = (('nyp','nxp'), lonGrid)
             self.grid.x.attrs['units'] = 'degrees_east'
+            self.grid.x.encoding['_FillValue'] = False
             self.grid['y'] = (('nyp','nxp'), latGrid)
             self.grid.y.attrs['units'] = 'degrees_north'
+            self.grid.y.encoding['_FillValue'] = False
             
             # Compute grid metrics
             self.computeGridMetrics()
             
             self.xrOpen = True
             
-            #self.grid.coords['nyp'] = ('nyp', nyp)
-            #self.grid.coords['nxp'] = ('nxp', nxp)
-        
             # This technique seems to return a Lambert Conformal Projection with the following properties
             # This only works if the grid does not overlap a polar point
             # (lat_0 - (dy/2), lat_0 + (dy/2))
@@ -440,7 +440,7 @@ class GridUtils:
             
     def openDataset(self, inputFilename):
         '''Open a grid file.  The file pointer is internal to the object.
-        To access it, use: obj.xrDS'''
+        To access it, use: obj.xrDS or obj.grid'''
         # check if we have a vailid inputFilename
         if not(os.path.isfile(inputFilename)):
             self.printVerbose("Dataset not found: %s" % (inputFilename))
@@ -478,27 +478,8 @@ class GridUtils:
         else:
             if self.xrOpen:
                 if opts['type'] == 'MOM6':
-                    # Load dims
-                    # Get the grid shape from the dimensions instead of the shape of a variable
-                    #for dimKey in self.ncfp.dimensions:
-                    #    self.gridInfo['dimensions'][dimKey] = self.ncfp.dimensions[dimKey].size
-
-                    #self.gridInfo['shape'] = (
-                    #    self.gridInfo['dimensions']['nyp'], self.gridInfo['dimensions']['nxp']
-                    #)
-
-                    # Load variables ['lons', 'lats']
-                    #read_variables = ['x','y']
-                    #for var in read_variables:
-                    #    self.grid[var] = self.ncfp.variables[var][:][:]
-                    #self.grid['xr'] = self.xrDS
-
                     # Save grid metadata
                     self.gridInfo['type'] = opts['type']
-                    # This method of computing the extent is subject to problems
-                    #self.gridInfo["extent"] = [
-                    #    self.grid['x'].min(), self.grid['x'].max(), self.grid['y'].min(), self.grid['y'].max()
-                    #]
                     self.grid = self.xrDS
         
         if localFilename:
