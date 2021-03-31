@@ -1,3 +1,4 @@
+# Conda config
 name: xesmfTools
 channels:
   - pyviz
