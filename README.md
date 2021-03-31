@@ -2,17 +2,22 @@
 
 A generic set of grid manipulation tools for computer models.  These tools are
 adapted from the ROMS ocean model and for specific use in the MOM6 ocean model.
-One could hope it can be kept generic enough to support any model.
+One could hope it can be kept generic enough to support any model.  The focus
+is on MOM6.
+
+There is currently two pieces of software required.
+
+Part I
+  * Python GridTools.py module
+
+Part II
+  * mkMapIterative.ipynb
+  * mkMapInteractive.ipynb
 
 # grid generation
 
-I am currently following an example by Niki Zadeh.  The hope is to
-make this interactive within Jupyter lab.  It may be worthy to continue
-to operate in several modes.
-
+Lambert Conformal Conic grid generation code was provided by Niki Zadeh.
 https://github.com/nikizadehgfdl/grid_generation/blob/dev/jupynotebooks/regional_grid_spherical.ipynb
-
-Currently targeting a mix of holoviz and bokeh modules.
 
 ## Design elements
 
