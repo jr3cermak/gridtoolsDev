@@ -9,6 +9,7 @@ import os.path
 import datetime
 import subprocess
 import warnings
+import pdb
 
 import Spherical
 
@@ -242,6 +243,7 @@ def _fill_in_MOM6_supergrid_metrics_spherical(mom6_grid):
     angle2[:, 0  ] = numpy.arctan2( (lat[:, 1] - lat[:, 0 ]) , ((lon[:, 1] - lon[:, 0 ]) * cos_lat[:, 0  ]) )
     angle2[:,-1  ] = numpy.arctan2( (lat[:,-1] - lat[:,-2 ]) , ((lon[:,-1] - lon[:,-2 ]) * cos_lat[:,-1  ]) )
     mom6_grid['supergrid']['angle'][:,:] = numpy.maximum(angle, angle2)
+    pdb.set_trace()
 
     # Approximate cell areas as that of spherical polygon
     mom6_grid['supergrid']['area'][:,:] = R * R * Spherical.quad_area(lat, lon)
