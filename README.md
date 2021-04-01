@@ -14,6 +14,19 @@ Part II
   * mkMapIterative.ipynb
   * mkMapInteractive.ipynb
 
+# Application
+
+The grid generation application, mkMapInteractive.ipynb, can be run on a cloud host.  It has
+been adapted to work on mybinder.org.
+
+Use the following options:
+ * GitHub=https://github.com/jr3cermak/gridtools
+ * Git ref=main
+ * Launch
+ * Once the server loads, navigate to gridTools/mkMapInteractive.ipynb
+ * Re-run all the cells
+ * Have fun with the grid editor.
+
 # grid generation
 
 Lambert Conformal Conic grid generation code was provided by Niki Zadeh.
