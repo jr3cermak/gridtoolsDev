@@ -3,21 +3,26 @@
 A generic set of grid manipulation tools for computer models.  These tools are
 adapted from the ROMS ocean model and for specific use in the MOM6 ocean model.
 One could hope it can be kept generic enough to support any model.  The focus
-is on MOM6.
+is on supporting the MOM6 ocean model.
 
-There is currently two pieces of software required.
+Required items:
+ * Spherical.py 
+ * gridtools.py
 
-Part I
-  * Python GridTools.py module
+Optional items:
+ * sysinfo.py
 
-Part II
-  * mkMapIterative.ipynb
-  * mkMapInteractive.ipynb
+Various tools are available to manipulation of new and existing grids in
+an iterative or interactive form.
+
+Jupyterlab notebooks:
+ * mkMapIterative.ipynb
+ * mkMapInteractive.ipynb
 
 # Application
 
-The grid generation application, mkMapInteractive.ipynb, can be run on a cloud host.  It has
-been adapted to work on mybinder.org.
+The grid generation application, mkMapInteractive.ipynb, can be run on a cloud hosting system.
+The application has been adapted to work on mybinder.org.
 
 Use the following options:
  * GitHub=https://github.com/jr3cermak/gridtools
@@ -27,14 +32,23 @@ Use the following options:
  * Re-run all the cells
  * Have fun with the grid editor.
 
-# grid generation
+# Code contributions
 
-Lambert Conformal Conic grid generation code was provided by Niki Zadeh.
-https://github.com/nikizadehgfdl/grid_generation/blob/dev/jupynotebooks/regional_grid_spherical.ipynb
+## Lambert Conformal Conic Grid Generation
+Author: Niki Zadeh [REPO](https://github.com/nikizadehgfdl/ocean_model_grid_generator)
+ * [regional_grid_spheical.ipynb](https://github.com/nikizadehgfdl/grid_generation/blob/dev/jupynotebooks/regional_grid_spherical.ipynb)
 
-## Design elements
+## Numpy bitwise-the-same floating-point values
+Author: Alistair Adcroft [REPO](https://github.com/adcroft/numpypi/tree/master)
+ * To obtain bitwise-the-same floating-point values in certain non-time-critical calculations.
 
-### Requirements
+## ROMS to MOM6 Grid Converter
+Authors: Mehmet Ilicak; Alistair Adcroft [REPO](https://github.com/ESMG/pyroms)
+ * [convert_ROMS_grid_to_MOM6.py](https://raw.githubusercontent.com/ESMG/pyroms/python3/examples/grid_MOM6/convert_ROMS_grid_to_MOM6.py)
+
+# Toolset design elements
+
+## Requirements
 
 These are MUST HAVE elements.
 
@@ -47,7 +61,7 @@ grid.
 Must work with these conformal projections:
  * Mercator
  * Lambert Conformal Conic
- * Polar Stereographic
+ * Polar Stereographic (N and S)
 
 Grid operation:
  * Set, increase, decrease number of grid points (x, y)
@@ -81,7 +95,7 @@ YAML specification files for different python environments.
 This assumes you have conda/miniconda installed.
 
 There is a generic YAML file that pulls together a development environment.  To
-expidite the conda environment solver, a YAML_export file is also provided for
+expidite the conda environment solver, a YAML\_export file is also provided for
 quicker recovery of a generic environment.
 
 Initialization:
@@ -250,6 +264,14 @@ show(bkapp, notebook_url="http://192.168.131.54:8888")
 
 My example is stored in:
 gridTools/bokeh/bokehJupyterStandaloneTest.ipynb
+
+NOTE: We have also discovered that the application might be launched another method
+that seems to work and is less confusing. (NEED TO TEST)
+
+```
+bkapp.servable();
+display(bkapp)
+```
 
 ## shortcuts
 

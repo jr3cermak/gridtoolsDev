@@ -5,5 +5,3 @@ jupyter serverextension enable --sys-prefix nbserverproxy
 mv panelserverextension.py ${NB_PYTHON_PREFIX}/lib/python*/site-packages/
 # enable panel extension
 jupyter serverextension enable --sys-prefix panelserverextension
-# See if we can get LIBROOT to stick
-export LIBROOT=/home/jovan/gridTools/lib

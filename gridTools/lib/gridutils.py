@@ -5,65 +5,6 @@
 # Niki Zadeh
 # Raphael Dussin
 
-# TASKS:
-#   [] grid creation/editor
-#      [X] grid metrics
-#        [] Mercator (might be 0? lined up along latitude lines)
-#        [DONE] Spherical solution is complete via ROMS to MOM6 converter
-#        [] Polar (might be the same as spherical?)
-#      [DONE] make Lambert Conformal Grids; needs global testing
-#      [] grid generation in other projections
-#   [] grid mask editor (land, etc)
-#   [] integration of bathymetric sources and apply to grids
-#      Niki: https://github.com/nikizadehgfdl/ocean_model_topog_generator
-
-# TODO:
-#   [] Further consolidate matplotlib plotting code
-#      [] Refactor plotting code.  It is mostly the same except for setting the projection.
-#   [] Do we have to declare everything in __init__ first or can be push all that to respective reset/clear functions?
-#   [] refactor refineS and refineR options as Niki had them defined
-#   [] Pass back an error graphic instead of None for figures that do not render
-#   [] Add a formal logging/message mechanism.
-#      [DONE] Allow display of important messages and warnings in panel application
-#      [] Move all this to options.  Interact with message buffer.
-#      [] Maybe warnings are better? Try some out.
-#      [] Create a message buffer/system for information 
-#   [] For now, the gridParameters are always in reference to a center point in a grid
-#     in the future, one may fix a side or point of the grid and grow out from that point
-#     instead of the center.
-#   [] makeGrid assumes degrees at this point.
-#   [] Add testing harness using pytest.
-#
-# WISH:
-#   [] tripolar grids
-#   [] Bring in code that converts ROMS grids to MOM6 grids
-#      [] Allow conversion of MOM6 grids to ROMS grids
-#   [] grid reading and plot parameter defaults should be dynamic with grid type declaration and potentially
-#      split out into separate library modules? lib/gridTools/grids/{MOM6,ROMS,WRF}
-#   Upstream requests:
-#   [] Place additional projection metadata into MOM6 grid files
-
-# Important references that made this project go
-# Mehmet Ilicak; Alistair Adcroft
-#  * ROMS to MOM6 grid converter
-#  * https://raw.githubusercontent.com/ESMG/pyroms/python3/examples/grid_MOM6/convert_ROMS_grid_to_MOM6.py
-#  * https://raw.githubusercontent.com/ESMG/pyroms/python3/examples/grid_MOM6/Spherical.py
-# Niki Zadeh
-#  * Lambert Conformal Conic grid generation provided by:
-#    https://github.com/nikizadehgfdl/grid_generation/blob/dev/jupynotebooks/regional_grid_spherical.ipynb
-# Bookmarks
-#  * https://www.python.org/dev/peps/pep-0008/#package-and-module-names
-#  * https://scitools.org.uk/cartopy/docs/latest/index.html
-#  * https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
-#  * https://panel.holoviz.org/gallery/index.html
-#  * https://towardsdatascience.com/plt-subplot-or-plt-subplots-understanding-state-based-vs-object-oriented-programming-in-pyplot-4ba0c7283f5d
-#  * https://unidata.github.io/MetPy/latest/examples/Four_Panel_Map.html
-#  * https://xarray.pydata.org/en/stable/examples/ROMS_ocean_model.html
-#  * https://xarray.pydata.org/en/stable/data-structures.html#dictionary-like-methods
-#  * https://xarray.pydata.org/en/stable/dask.html
-#  * https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
-#  * https://github.com/binder-examples/conda
-
 # General imports and definitions
 import os, sys
 import cartopy
@@ -74,7 +15,9 @@ import pdb
 
 # Needed for panel.pane                
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvas  # not needed for mpl >= 3.1
+# not needed for mpl >= 3.1
+# Does not cause any problems to continue to use it
+from matplotlib.backends.backend_agg import FigureCanvas  
 
 # Required for:
 #  * ROMS to MOM6 grid conversion
