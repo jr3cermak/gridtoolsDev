@@ -5,15 +5,23 @@ A milestone for version 1.0 has yet to be established.
 # TASKS
 
  - [ ] grid creation/editor
-   - [X] grid metrics
-   - [ ] Mercator (might be 0? lined up along latitude lines)
-   - [DONE] Spherical solution is complete via ROMS to MOM6 converter
-   - [ ] Polar (might be the same as spherical?)
-   - [DONE] make Lambert Conformal Grids; needs global testing
+   - [ ] grid metrics
+     - [X] Spherical solution is complete via ROMS to MOM6 converter
+     - [ ] Mercator (might be 0? lined up along latitude lines)
+     - [ ] Polar (might be the same as spherical?)
+   - [X] make Lambert Conformal Grids; needs global testing
    - [ ] grid generation in other projections
  - [ ] grid mask editor (land, etc)
  - [ ] integration of bathymetric sources and apply to grids
        Niki: https://github.com/nikizadehgfdl/ocean_model_topog_generator
+ - [ ] add nbserverproxy to conda software stacks
+ - [ ] see if xgcm can be added to the xesmf software stack
+ - [ ] xarray \_FillValue needs to be turned off somehow
+ - [ ] place display(dashboard) as a separate notebook cell
+ - [ ] on load of a grid
+   - [ ] calculate R
+   - [ ] calculate tilt
+   - [ ] update any tool metadata that is appropriate for that grid
 
 # TODO
 
@@ -23,7 +31,7 @@ A milestone for version 1.0 has yet to be established.
  - [ ] refactor refineS and refineR options as Niki had them defined
  - [ ] Pass back an error graphic instead of None for figures that do not render
  - [ ] Add a formal logging/message mechanism.
-   - [DONE] Allow display of important messages and warnings in panel application
+   - [X] Allow display of important messages and warnings in panel application
    - [ ] Move all this to options.  Interact with message buffer.
    - [ ] Maybe warnings are better? Try some out.
    - [ ] Create a message buffer/system for information 
