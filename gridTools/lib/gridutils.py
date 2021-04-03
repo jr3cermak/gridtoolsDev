@@ -25,8 +25,8 @@ from matplotlib.backends.backend_agg import FigureCanvas
 #  * Computation of MOM6 grid metrics
 import Spherical
 
-# GridTools() application
-import app
+# GridUtils() application
+from app import App
 
 class GridUtils:
 
@@ -34,6 +34,7 @@ class GridUtils:
         # Constants
         self.PI_180 = np.pi/180.
         self._default_Re = 6.378e6
+        
         # File pointer
         self.xrOpen = False
         self.xrFilename = None
@@ -70,8 +71,8 @@ class GridUtils:
     
     # Connect GridTools() to the actual applcation
     def app(self):
-        dashboard = App(grd=self.grd)
-        return dashboard
+        dashboard = App(grd=self)
+        return dashboard.dashboard
     
     def application(self, app={}):
         '''Attach application items to the GridUtil object.

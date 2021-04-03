@@ -1,5 +1,11 @@
 # Change Log
 
+# 2021-04-03
+
+ - BUG: add ccrs.SouthPolarStereo() to projCarto
+ - Remove plotExtentX0,X1 checks for lon>180
+ - Moving the boilerplate into its own module works
+
 # 2021-04-02
 
  - combined xgcmTools with xecmfTools configuration

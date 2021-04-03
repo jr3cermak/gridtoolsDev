@@ -13,7 +13,8 @@ A milestone for version 1.0 has yet to be established.
      - [ ] LCC cannot take custom lat_1 and lat_2; it generates lat_1 and lat_2 based on grid inputs
      - [X] Update new lat_1 and lat_2 for application once makeGrid() is run
    - [ ] grid generation in other projections
-   - [ ] saveGrid() convert lon [+0,+360] to [-180,+180]
+   - [ ] on saveGrid() convert lon [+0,+360] to [-180,+180]
+   - [ ] Unify ellipse radius (R) constants
  - [ ] grid mask editor (land, etc)
  - [ ] integration of bathymetric sources and apply to grids
        Niki: https://github.com/nikizadehgfdl/ocean_model_topog_generator
@@ -26,7 +27,7 @@ A milestone for version 1.0 has yet to be established.
    - [ ] calculate R
    - [ ] calculate tilt (may not be possible)
    - [ ] update any tool metadata that is appropriate for that grid
- - [ ] Create an application method within the GridTools() class; GridTools().app()
+ - [X] Create an application method within the GridUtils() class; GridTools().app()
 
 # TODO
 

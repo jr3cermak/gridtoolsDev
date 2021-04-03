@@ -7,7 +7,8 @@ is on supporting the MOM6 ocean model.
 
 Required items:
  * Spherical.py 
- * gridtools.py
+ * gridutils.py
+ * app.py
 
 Optional items:
  * sysinfo.py
@@ -94,11 +95,11 @@ Grid operation:
  * Adjust the drawn box with a fixed boundary or point
  * Grid rotation
 
-## Operational modes
+### Operational modes
 
 Desired operational modes
  * Command line
- * Command line widget mode (ipython --pylab mode)
+ * Command line widget mode
  * jupyter notebook
  * jupyter lab
 
@@ -158,7 +159,6 @@ Exploring various display/grid manipulation options at the moment:
 Exporing various data/grid manipulation and visualization options:
  * holoviz
  * pangeo
- * xgcm
  * xesmf
 
 # Environments
@@ -197,7 +197,7 @@ $ conda activate gridTools
 If panning of maps fails or freezes, it usually requires a full reload of the
 entire web page and the contents of JupyterLab to restore.
 
-## pyroms
+### pyroms
 
 NOTE: This is a very limited environment with netcdf4 and matplotlib's basemap
 to review former functionality.  This should be migrated ASAP to utilize modern
@@ -241,7 +241,7 @@ in editmask.py saves any edits made to the grid.
 However, this should also work in jupyterlab via ipympl which is untested at
 the moment.
 
-# jupyterlab
+# JupyterLab
 
 I currently run a Oracle VirtualBox on a MacOS and have the network setting for
 Adapter 1 set as bridged over the wifi interface (en0).  Doing so, I get a DHCP
@@ -290,7 +290,7 @@ bkapp.servable();
 display(bkapp)
 ```
 
-## shortcuts
+## Jupyter Shortcuts
 
 You can install the shortcuts within JupyterLab web interface through Settings,
 Advanced Setting Editor and Keyboard Shortcuts and edit the "User Preferences"
@@ -304,3 +304,21 @@ The current shortcuts add two keyboard shortcuts to the notebook editor:
 
 You must not be editing the cell. The cell to move must be selected just to the
 left and is denoted by a vertical bar highlighting the cell.
+
+# Operational Modes
+
+## Command Line
+
+ * python
+
+## Command Line Widget Mode
+
+ * ipython --pylab mode
+
+## Jupyter notebook
+
+ * jupyter notebook
+
+## Jupyter lab
+
+ * jupyter lab
