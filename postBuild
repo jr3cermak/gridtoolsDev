@@ -13,14 +13,13 @@ export LIBROOT="/home/jovyan/gridTools/lib"
 # Paths are setup already
 # conda activate notebook
 export OPWD=`pwd`
-pip install wheel
 # datashader
 git clone https://github.com/holoviz/datashader.git
-cd ${OPWD}
 cd datashader
 pip install -e .
 # numpypi
-git clone https://github.com/adcroft/numpypi.git
 cd ${OPWD}
+git clone https://github.com/adcroft/numpypi.git
 cd numpypi
 cp numpypi_series.py ignore_this.py ${LIBROOT}
+cd ${OPWD}
