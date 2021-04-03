@@ -1,11 +1,11 @@
 # Important references
 
-These are references and bookmarks that had useful informatio to make this project go.
+These are people, references and bookmarks that provided useful information to make this project go.
 
 ## Alistair Adcroft
  * numpypi: https://github.com/adcroft/numpypi/tree/master
 
-## Mehmet Ilicak; Alistair Adcroft
+## Mehmet Ilicak; Alistair Adcroft; Matthew Harrison
  * ROMS to MOM6 grid converter
  * https://raw.githubusercontent.com/ESMG/pyroms/python3/examples/grid_MOM6/convert_ROMS_grid_to_MOM6.py
  * https://raw.githubusercontent.com/ESMG/pyroms/python3/examples/grid_MOM6/Spherical.py
@@ -26,3 +26,4 @@ These are references and bookmarks that had useful informatio to make this proje
  * https://xarray.pydata.org/en/stable/dask.html
  * https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
  * https://github.com/binder-examples/conda
+ * https://www.kite.com/python/answers/how-to-hide-a-figure-from-being-shown-in-matplotlib-in-python

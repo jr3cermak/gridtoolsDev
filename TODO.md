@@ -6,22 +6,27 @@ A milestone for version 1.0 has yet to be established.
 
  - [ ] grid creation/editor
    - [ ] grid metrics
-     - [X] Spherical solution is complete via ROMS to MOM6 converter
-     - [ ] Mercator (might be 0? lined up along latitude lines)
+     - [X] Spherical solution is complete via Niki's ROMS to MOM6 converter
+     - [ ] Mercator (angle_dx might be 0 as it is lined up along latitude lines; except for tilt?)
      - [ ] Polar (might be the same as spherical?)
-   - [X] make Lambert Conformal Grids; needs global testing
+   - [ ] make Lambert Conformal Conic Grids; needs testing
+     - [ ] LCC cannot take custom lat_1 and lat_2; it generates lat_1 and lat_2 based on grid inputs
+     - [X] Update new lat_1 and lat_2 for application once makeGrid() is run
    - [ ] grid generation in other projections
+   - [ ] saveGrid() convert lon [+0,+360] to [-180,+180]
  - [ ] grid mask editor (land, etc)
  - [ ] integration of bathymetric sources and apply to grids
        Niki: https://github.com/nikizadehgfdl/ocean_model_topog_generator
- - [ ] add nbserverproxy to conda software stacks
- - [ ] see if xgcm can be added to the xesmf software stack
- - [ ] xarray \_FillValue needs to be turned off somehow
- - [ ] place display(dashboard) as a separate notebook cell
+ - [X] add nbserverproxy/xgcm to conda software stacks; copied to binder environment.yml
+ - [ ] turn numpypi into a loadable package via pip
+ - [ ] add datashader and numpypi from github sources
+ - [X] xarray \_FillValue needs to be turned off somehow
+ - [X] place display(dashboard) as a separate notebook cell
  - [ ] on load of a grid
    - [ ] calculate R
-   - [ ] calculate tilt
+   - [ ] calculate tilt (may not be possible)
    - [ ] update any tool metadata that is appropriate for that grid
+ - [ ] Create an application method within the GridTools() class; GridTools().app()
 
 # TODO
 
@@ -50,3 +55,5 @@ A milestone for version 1.0 has yet to be established.
  - [ ] grid reading and plot parameter defaults should be dynamic with grid type declaration and potentially
        split out into separate library modules? lib/gridTools/grids/{MOM6,ROMS,WRF}
  - [ ] Place additional projection metadata into MOM6 grid files
+   - [X] Added proj string to netCDF file
+   - [ ] Tri polar grid description

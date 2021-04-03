@@ -35,16 +35,31 @@ Use the following options:
 # Code contributions
 
 ## Lambert Conformal Conic Grid Generation
-Author: Niki Zadeh [REPO](https://github.com/nikizadehgfdl/ocean_model_grid_generator)
+Author: Niki Zadeh [REPO](https://github.com/nikizadehgfdl/grid_generation.git)
  * [regional_grid_spheical.ipynb](https://github.com/nikizadehgfdl/grid_generation/blob/dev/jupynotebooks/regional_grid_spherical.ipynb)
 
 ## Numpy bitwise-the-same floating-point values
-Author: Alistair Adcroft [REPO](https://github.com/adcroft/numpypi/tree/master)
+Author: Alistair Adcroft [REPO](https://github.com/adcroft/numpypi.git)
  * To obtain bitwise-the-same floating-point values in certain non-time-critical calculations.
 
 ## ROMS to MOM6 Grid Converter
 Authors: Mehmet Ilicak; Alistair Adcroft [REPO](https://github.com/ESMG/pyroms)
  * [convert_ROMS_grid_to_MOM6.py](https://raw.githubusercontent.com/ESMG/pyroms/python3/examples/grid_MOM6/convert_ROMS_grid_to_MOM6.py)
+
+# Workarounds
+
+These are the current workarounds that are required for the grid toolset package.
+
+## datashader
+
+The lastest version from github is required for proper operation of bokeh, holoviews and panel which
+are used by the interactive portions of the grid toolset. [REPO](https://github.com/holoviz/datashader.git)
+
+## numpypi
+
+For bitwise-the-same reproducable results, a numpy subset of computational functions are
+provided.  These routines are slower than the numpy native routines.  See code contributions
+for source.
 
 # Toolset design elements
 
@@ -62,6 +77,7 @@ Must work with these conformal projections:
  * Mercator
  * Lambert Conformal Conic
  * Polar Stereographic (N and S)
+ * Tri Polar
 
 Grid operation:
  * Set, increase, decrease number of grid points (x, y)
@@ -147,6 +163,8 @@ Exporing various data/grid manipulation and visualization options:
 
 # Environments
 
+Current operational environment for the grid toolset: ***xesmfTools***
+
 ## Initialization
 
 Initialization times:
@@ -156,7 +174,6 @@ Initialization times:
  * pangeo: 10m 41s
  * pyroms: 1m 43s
  * xesmfTools: 5m 5s(!)
- * xgcmTools: 5m 26s
 
 (!) Requires post installation step to solve environment
 

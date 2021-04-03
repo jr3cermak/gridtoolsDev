@@ -3,6 +3,7 @@
 # James Simkins
 # Rob Cermak
 # Niki Zadeh
+# Alistair Adcroft
 # Raphael Dussin
 
 # General imports and definitions
@@ -23,6 +24,9 @@ from matplotlib.backends.backend_agg import FigureCanvas
 #  * ROMS to MOM6 grid conversion
 #  * Computation of MOM6 grid metrics
 import Spherical
+
+# GridTools() application
+import app
 
 class GridUtils:
 
@@ -63,6 +67,11 @@ class GridUtils:
         self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
                
     # Utility functions
+    
+    # Connect GridTools() to the actual applcation
+    def app(self):
+        dashboard = App(grd=self.grd)
+        return dashboard
     
     def application(self, app={}):
         '''Attach application items to the GridUtil object.
@@ -156,6 +165,8 @@ class GridUtils:
         self.grid.attrs['grid_version'] = "0.2"
         self.grid.attrs['code_version'] = "GridTools: beta"
         self.grid.attrs['history'] = "sometime: GridTools"
+        self.grid.attrs['projection'] = self.gridInfo['gridParameters']['projection']['name']
+        self.grid.attrs['proj'] = self.gridInfo['gridParameters']['projection']['proj']
         
         R = 6370.e3 # Radius of sphere        
 
@@ -166,10 +177,8 @@ class GridUtils:
         # Approximate edge lengths as great arcs
         self.grid['dx'] = (('nyp', 'nx'),  R * Spherical.angle_through_center( (lat[ :,1:],lon[ :,1:]), (lat[:  ,:-1],lon[:  ,:-1]) ))
         self.grid.dx.attrs['units'] = 'meters'
-        self.grid.dx.encoding['_FillValue'] = False
         self.grid['dy'] = (('ny' , 'nxp'), R * Spherical.angle_through_center( (lat[1:, :],lon[1:, :]), (lat[:-1,:  ],lon[:-1,:  ]) ))
         self.grid.dy.attrs['units'] = 'meters'
-        self.grid.dy.encoding['_FillValue'] = False
         
         # Scaling by latitude?
         cos_lat = np.cos(np.radians(lat))
@@ -183,16 +192,36 @@ class GridUtils:
         angle_dx[:,-1  ] = np.arctan2( (lat[:,-1] - lat[:,-2 ]) , ((lon[:,-1] - lon[:,-2 ]) * cos_lat[:,-1  ]) )
         self.grid['angle_dx'] = (('nyp', 'nxp'), angle_dx)
         self.grid.angle_dx.attrs['units'] = 'radians'
-        self.grid.angle_dx.encoding['_FillValue'] = False
         
         self.grid['area'] = (('ny','nx'), R * R * Spherical.quad_area(lat, lon))
         self.grid.area.attrs['units'] = 'meters^2'
-        self.grid.area.encoding['_FillValue'] = False
 
         return
         
     def makeGrid(self):
         '''Using supplied grid parameters, populate a grid in memory.'''
+
+        # Make a grid in the Mercator projection
+        if self.gridInfo['gridParameters']['projection']['name'] == "Mercator":
+            self.gridInfo['gridParameters']['projection']['proj'] =\
+                    "+ellps=WGS84 +proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +units=m +no_defs" %\
+                        (self.gridInfo['gridParameters']['projection']['lon_0'])
+
+        # Make a grid in the North Polar Stereo projection
+        if self.gridInfo['gridParameters']['projection']['name'] == "NorthPolarStereo":
+            self.gridInfo['gridParameters']['projection']['proj'] =\
+                    "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
+                        (self.gridInfo['gridParameters']['projection']['lat_0'],
+                        self.gridInfo['gridParameters']['projection']['lon_0'])
+
+        # Make a grid in the South Polar Stereo projection
+        if self.gridInfo['gridParameters']['projection']['name'] == "SouthPolarStereo":
+            self.gridInfo['gridParameters']['projection']['proj'] =\
+                    "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s +x_0=0.0 +y_0=0.0 +no_defs" %\
+                        (self.gridInfo['gridParameters']['projection']['lat_0'],
+                        self.gridInfo['gridParameters']['projection']['lon_0'])
+
+        # Make a grid in the Lambert Conformal Conic projection
         if self.gridInfo['gridParameters']['projection']['name'] == 'LambertConformalConic':
             # Sometimes tilt may not be specified, so use a default of 0.0
             if 'tilt' in self.gridInfo['gridParameters'].keys():
@@ -210,16 +239,9 @@ class GridUtils:
             
             self.grid['x'] = (('nyp','nxp'), lonGrid)
             self.grid.x.attrs['units'] = 'degrees_east'
-            self.grid.x.encoding['_FillValue'] = False
             self.grid['y'] = (('nyp','nxp'), latGrid)
             self.grid.y.attrs['units'] = 'degrees_north'
-            self.grid.y.encoding['_FillValue'] = False
-            
-            # Compute grid metrics
-            self.computeGridMetrics()
-            
-            self.xrOpen = True
-            
+
             # This technique seems to return a Lambert Conformal Projection with the following properties
             # This only works if the grid does not overlap a polar point
             # (lat_0 - (dy/2), lat_0 + (dy/2))
@@ -227,6 +249,18 @@ class GridUtils:
                 self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
             self.gridInfo['gridParameters']['projection']['lat_2'] =\
                 self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
+            self.gridInfo['gridParameters']['projection']['proj'] =\
+                    "+ellps=WGS84 +proj=lcc +lon_0=%s +lat_0=%s +x_0=0.0 +y_0=0.0 +lat_1=%s +lat_2=%s +no_defs" %\
+                        (self.gridInfo['gridParameters']['projection']['lat_0'],
+                        self.gridInfo['gridParameters']['projection']['lon_0'],
+                        self.gridInfo['gridParameters']['projection']['lat_1'],
+                        self.gridInfo['gridParameters']['projection']['lat_2'])
+
+            # Declare the xarray dataset open even though it is really only in memory at this point
+            self.xrOpen = True
+            
+            # Compute grid metrics
+            self.computeGridMetrics()
     
     # Original functions provided by Niki Zadeh - Lambert Conformal Conic grids
     # Grid creation and rotation in spherical coordinates
@@ -427,6 +461,16 @@ class GridUtils:
         
         if localFilename:
             self.xrFilename = localFilename
+
+    def removeFillValueAttributes(self):
+
+        ncEncoding = {}
+        ncVars = list(self.grid.variables)
+        for ncVar in ncVars:
+            ncEncoding[ncVar] = {'_FillValue': None}
+
+        return ncEncoding
+
     
     def saveGrid(self, filename=None):
         '''
@@ -436,7 +480,7 @@ class GridUtils:
             self.xrFilename = filename
             
         try:
-            self.grid.to_netcdf(self.xrFilename)
+            self.grid.to_netcdf(self.xrFilename, encoding=self.removeFillValueAttributes())
             self.printVerbose("Successfully wrote netCDF file to %s" % (self.xrFilename))
         except:
             self.printVerbose("Failed to write netCDF file to %s" % (self.xrFilename))
