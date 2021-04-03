@@ -102,6 +102,7 @@ Desired operational modes
  * Command line widget mode
  * jupyter notebook
  * jupyter lab
+ * cloud: mybinder.org
 
 # Directories
 
@@ -326,3 +327,8 @@ script, you can use `ipython -c "%run your_script.ipynb"`.  Or start ipython, an
 ## Jupyter lab
 
  * jupyter lab
+
+## mybinder
+
+ * Main: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jr3cermak/gridtools/main)
+ * Dev: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jr3cermak/gridtools/robTest)
