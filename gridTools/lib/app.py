@@ -170,7 +170,7 @@ class App:
         # Update grid info
         self.updateDataView()
 
-        if self.projNamesGridTools[gridProjection.value] == 'LambertConformalConic':
+        if self.projNamesGridTools[self.gridProjection.value] == 'LambertConformalConic':
             # For this projection LCC sets lat_1 and lat_2 based on grid inputs.
             updateMessage = "NOTICE: Grid first and second parallels (lat_1, lat_2) have been changed to (%s, %s)." %\
                 (self.grd.gridInfo['gridParameters']['projection']['lat_1'], self.grd.gridInfo['gridParameters']['projection']['lat_2'])
@@ -236,7 +236,7 @@ class App:
         return figure
 
     def plotRefresh(self, event):
-        self.plotWindow.object = make_plot()
+        self.plotWindow.object = self.make_plot()
         return
 
     def showManual(self):

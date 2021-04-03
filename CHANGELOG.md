@@ -5,6 +5,9 @@
  - BUG: add ccrs.SouthPolarStereo() to projCarto
  - Remove plotExtentX0,X1 checks for lon>180
  - Moving the boilerplate into its own module works
+ - BUG(migration): makeGrid() contained a small bug, parallels were not updating; missing self
+ - reworked the way we start the app via show() and display()
+ - BUG(migration): Plot button stopped working; missing self 
 
 # 2021-04-02
 
