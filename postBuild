@@ -1,3 +1,4 @@
+#!/bin/bash
 # enable nbserverproxy
 jupyter serverextension enable --sys-prefix nbserverproxy
 # install the panel server extension so that
@@ -9,7 +10,8 @@ jupyter serverextension enable --sys-prefix panelserverextension
 # See README.md for workaround details
 LIBROOT="/home/jovyan/gridTools/lib"
 # Binder uses "notebook" as the loaded conda environment
-conda activate notebook
+# Paths are setup already
+# conda activate notebook
 OPWD=`pwd`
 # datashader
 git clone https://github.com/holoviz/datashader.git

@@ -313,7 +313,11 @@ left and is denoted by a vertical bar highlighting the cell.
 
 ## Command Line Widget Mode
 
- * ipython --pylab mode
+ * ipython --pylab
+
+The interpreter, ipython, can run python scripts and notebook scripts.  To run a notebook
+script, you can use `ipython -c "%run your_script.ipynb"`.  Or start ipython, and then
+`%run your_script.ipynb`.
 
 ## Jupyter notebook
 
