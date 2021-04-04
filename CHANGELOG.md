@@ -8,6 +8,8 @@
  - BUG(migration): makeGrid() contained a small bug, parallels were not updating; missing self
  - reworked the way we start the app via show() and display()
  - BUG(migration): Plot button stopped working; missing self 
+ - BUG(migration): Saving local files are fixed
+ - BUG(migration): Call the showManual method with ()
 
 # 2021-04-02
 

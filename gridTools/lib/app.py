@@ -95,14 +95,13 @@ class App:
     def downloadNetCDF(self):
         # See if we have a race condition
         self.saveLocalGridButton.filename = self.gridFilenameLocal.value
-        bout = grd.grid.to_netcdf(encoding=self.grd.grid.removeFillValueAttributes())
+        bout = self.grd.grid.to_netcdf(encoding=self.grd.removeFillValueAttributes())
         bio = BytesIO()
         bio.write(bout)
         bio.seek(0)
         return bio
 
     def loadLocalGrid(self, event):
-
         if self.localFileSelection.value == None:
             self.statusWidget.value = "A grid file has not been selected in the Local File tab."
             return
@@ -121,7 +120,6 @@ class App:
         return
     
     def loadRemoteGrid(self, event):
-
         ct = len(self.remoteFileSelection.value)
 
         if ct == 0:
@@ -288,7 +286,7 @@ class App:
 
         manualTabs.extend([
             ('Main', pageMain),
-            ('Grids',pageGrids)
+            ('Grids', pageGrids)
         ])
 
         return manualTabs
@@ -497,7 +495,7 @@ class App:
             ('Grid Info', self.dataView),
             ('Local Files', self.localFilesWindow),
             ('Remote Files', self.remoteFilesWindow),
-            ('Manual', self.showManual)
+            ('Manual', self.showManual())
         ])
         
     def initializeDashboard(self):
