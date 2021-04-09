@@ -1,11 +1,3 @@
-# Credits
-#
-# James Simkins
-# Rob Cermak
-# Niki Zadeh
-# Alistair Adcroft
-# Raphael Dussin
-
 # General imports and definitions
 import os, sys
 import cartopy
@@ -13,6 +5,7 @@ import numpy as np
 import xarray as xr
 import warnings
 import pdb
+import logging
 
 # Needed for panel.pane                
 from matplotlib.figure import Figure
@@ -23,7 +16,7 @@ from matplotlib.backends.backend_agg import FigureCanvas
 # Required for:
 #  * ROMS to MOM6 grid conversion
 #  * Computation of MOM6 grid metrics
-import Spherical
+import spherical
 
 # GridUtils() application
 from app import App
@@ -43,9 +36,6 @@ class GridUtils:
         # Internal parameters
         self.usePaneMatplotlib = False
         self.msgBox = None
-        # Debugging/logging
-        self.debugLevel = 0
-        self.verboseLevel = 0
         # Private variables begin with a _
         # Grid parameters
         self.gridInfo = {}
@@ -66,16 +56,42 @@ class GridUtils:
         # Plot parameters
         self.gridInfo['plotParameters'] = self.plotParameterDefaults
         self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
-               
+        
+        # Messages
+        # Logging and Verbosity Levels
+        # CRITICAL:50; ERROR:40; WARNING:30; INFO:20, DEBUG:10, NOTSET:0
+        self.debugLevel = 0
+        self.verboseLevel = logging.INFO
+        # Logging options
+        self.msgBuffer = []
+        self.msgLogger = False
+        self.msgLogFile = None
+        self.msgLogLevel = logging.WARNING
+        self.stdLogValues = {
+                0: 'NOTSET',
+                10: 'DEBUG',
+                20: 'INFO',
+                30: 'WARNING',
+                40: 'ERROR',
+                50: 'CRITICAL'
+        }
+
     # Utility functions
-    
-    # Connect GridTools() to the actual applcation
+
+    def addMessage(self, msg):
+        '''Append new message to message buffer.'''
+        self.msgBuffer.append(msg)
+        return
+
     def app(self):
-        dashboard = App(grd=self)
-        return dashboard.dashboard
-    
+        '''By calling this function, the user is requesting the application functionality of GridUtils().
+           return the dashboard, but GridUtils() also has an internal pointer to the application.'''
+        appObj = App(grd=self)
+        self.app = appObj
+        return appObj.dashboard
+
     def application(self, app={}):
-        '''Attach application items to the GridUtil object.
+        '''Convienence function to attach application items to GridUtil so it can update certain portions of the application.
         
             app = {
                 'messages': panel.widget.TextBox     # Generally a pointer to a panel widget for display of text
@@ -88,30 +104,108 @@ class GridUtils:
         appKeys = app.keys()
         if 'messages' in appKeys:
             self.msgBox = app['messages']
-            self.msgBox.value = "GridUtils attached to application."
+            msg = "GridUtils application initialized."
+            self.printMsg(msg, logging.INFO)
         if 'defaultFigureSize' in appKeys:
             self.plotParameterDefaults['figsize'] = app['defaultFigureSize']
         if 'usePaneMatplotlib' in appKeys:
             self.usePaneMatplotlib = app['usePaneMatplotlib']
         else:
-            self.usePaneMatplotlib = False       
-        
-    def printVerbose(self, msg):
+            self.usePaneMatplotlib = False
+
+    def clearMessage(self):
+        '''This clears the message buffer of messages.'''
+        self.msgBuffer = []
+        return
+
+    def debugMsg(self, msg, level = -1):
+        '''This function has a specific purpose to aid in debugging and
+        activating pdb breakpoints.  NOTE: pdb breakpoints tend not to
+        work very well when running under the application.  It tends to
+        terminate the bokeh/tornado server.
+
+        .. note::
+
+            Currently defined debug levels:
+                0=off 
+                1=log debugging messages
+                2=raise an exception
+                3=stop with a pdb breakpoint after logging message
         '''
-        If verboseLevel is non-zero, some additional messages are produced.  If
-        this is attached to a panel application with a message box, the output is
-        sent to that object.
-        '''
-        if self.verboseLevel > 0:
-            if hasattr(self, 'msgBox'):
-                if self.msgBox:
-                    self.msgBox.value = msg
-                    return
-            
-            print(msg)
+
+        if level < 1:
+            return
+
+        if level >= 1 and msg != "":
+            # Send the message at the DEBUG level if 
+            # the message is not empty
+            printMsg(msg, level=logging.DEBUG)
+
+        if level == 2:
+            raise
+
+        if level == 3:
+            pdb.set_trace()
 
         return
-    
+
+    def enableLogging(self, logFilename):
+        '''Enable logging of messages to a file'''
+        # Test to see if we can write to the log file
+        try:
+            fn = open(logFile, 'a')
+        except:
+            printMsg("Failed to open logfile (%s)" % (logFilename), logging.CRITICAL)
+
+        fn.close()
+        logging.basicConfig(filename=logFilename, encoding='utf-8', level=self.msgLogLevel)
+        logging.info("Logging enabled")
+        self.msgLogger = True
+
+    def disableLogging(self):
+        '''Disable logging of messages to a file'''
+        logging.info("Logging disabled")
+        logging.shutdown()
+        self.msgLogger = False
+
+    def getDebugLevel(self):
+        '''Get the current debug level for GridUtils().  Debug levels that are currently
+        defined are: '''
+        return self.debugLevel
+
+    def getVerboseLevel(self):
+        '''Get the current verbose level for GridUtils()'''
+        return self.verboseLevel
+
+    def printMsg(self, msg, level = logging.INFO):
+        '''
+        The verboseLevel and msgLogLevel can be set separately to any level.
+        If this is attached to a panel application with a message
+        box, the output is sent to that object.  Messages omitting the level argument
+        will default to INFO.
+        '''
+
+        # If logging is enabled, send it to the logger
+        if self.msgLogger:
+            logging.log(level, msg)
+
+        if level >= self.verboseLevel:
+           self.addMessage(msg)
+
+           # Always update the application message box
+           # If we don't have a msgBox, then print to STDOUT.
+           if hasattr(self, 'msgBox'):
+               if self.msgBox:
+                   self.msgBox.value = self.showMessages()
+           else:
+               print(msg)
+
+        return
+
+    def showMessages(self):
+        '''This converts the message buffer to text with linefeeds.'''
+        return '\n'.join(self.msgBuffer) 
+
     def setDebugLevel(self, newLevel):
         '''Set a new debug level.
 
@@ -124,6 +218,12 @@ class GridUtils:
             Areas of code that typically cause errors have try/except blocks.  Some of these
             have python debugging breakpoints that are active when the debug level is set
             to a positive number.        
+
+            Currently defined debug levels:
+                0=off 
+                1=extra messages
+                2=raise an exception
+                3=stop at breakpoints
         '''
         self.debugLevel = newLevel
     
@@ -176,9 +276,9 @@ class GridUtils:
         lat = self.grid.y
         
         # Approximate edge lengths as great arcs
-        self.grid['dx'] = (('nyp', 'nx'),  R * Spherical.angle_through_center( (lat[ :,1:],lon[ :,1:]), (lat[:  ,:-1],lon[:  ,:-1]) ))
+        self.grid['dx'] = (('nyp', 'nx'),  R * spherical.angle_through_center( (lat[ :,1:],lon[ :,1:]), (lat[:  ,:-1],lon[:  ,:-1]) ))
         self.grid.dx.attrs['units'] = 'meters'
-        self.grid['dy'] = (('ny' , 'nxp'), R * Spherical.angle_through_center( (lat[1:, :],lon[1:, :]), (lat[:-1,:  ],lon[:-1,:  ]) ))
+        self.grid['dy'] = (('ny' , 'nxp'), R * spherical.angle_through_center( (lat[1:, :],lon[1:, :]), (lat[:-1,:  ],lon[:-1,:  ]) ))
         self.grid.dy.attrs['units'] = 'meters'
         
         # Scaling by latitude?
@@ -194,33 +294,136 @@ class GridUtils:
         self.grid['angle_dx'] = (('nyp', 'nxp'), angle_dx)
         self.grid.angle_dx.attrs['units'] = 'radians'
         
-        self.grid['area'] = (('ny','nx'), R * R * Spherical.quad_area(lat, lon))
+        self.grid['area'] = (('ny','nx'), R * R * spherical.quad_area(lat, lon))
         self.grid.area.attrs['units'] = 'meters^2'
 
         return
-        
+   
+
+
+
     def makeGrid(self):
         '''Using supplied grid parameters, populate a grid in memory.'''
 
         # Make a grid in the Mercator projection
-        if self.gridInfo['gridParameters']['projection']['name'] == "Mercator":
+        if self.gridInfo['gridParameters']['projection']['name'] == "Mercator":      
+            if 'tilt' in self.gridInfo['gridParameters'].keys():
+                tilt = self.gridInfo['gridParameters']['tilt']
+            else:
+                tilt = 0.0
+
+            lonGrid, latGrid = self.generate_regional_spherical(
+                self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
+                0, # lat0 is 0 in mercator projection?
+                self.gridInfo['gridParameters']['dy'],
+                tilt,
+                self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
+            )
+
+            (nxp, nyp) = lonGrid.shape
+
+            self.grid['x'] = (('nyp','nxp'), lonGrid)
+            self.grid.x.attrs['units'] = 'degrees_east'
+            self.grid['y'] = (('nyp','nxp'), latGrid)
+            self.grid.y.attrs['units'] = 'degrees_north'
+
+            # This technique seems to return a Lambert Conformal Projection with the following properties
+            # This only works if the grid does not overlap a polar point
+            # (lat_0 - (dy/2), lat_0 + (dy/2))
+            #self.gridInfo['gridParameters']['projection']['lat_1'] =\
+               # self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
+            #self.gridInfo['gridParameters']['projection']['lat_2'] =\
+              #  self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
             self.gridInfo['gridParameters']['projection']['proj'] =\
                     "+ellps=WGS84 +proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +units=m +no_defs" %\
                         (self.gridInfo['gridParameters']['projection']['lon_0'])
 
+            # Declare the xarray dataset open even though it is really only in memory at this point
+            self.xrOpen = True
+
+            # Compute grid metrics
+            self.computeGridMetrics()
+
+
         # Make a grid in the North Polar Stereo projection
         if self.gridInfo['gridParameters']['projection']['name'] == "NorthPolarStereo":
+            if 'tilt' in self.gridInfo['gridParameters'].keys():
+                tilt = self.gridInfo['gridParameters']['tilt']
+            else:
+                tilt = 0.0
+
+            lonGrid, latGrid = self.generate_regional_spherical(
+                self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
+                self.gridInfo['gridParameters']['projection']['lat_0'], self.gridInfo['gridParameters']['dy'],
+                tilt,
+                self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
+            )
+
+            (nxp, nyp) = lonGrid.shape
+
+            self.grid['x'] = (('nyp','nxp'), lonGrid)
+            self.grid.x.attrs['units'] = 'degrees_east'
+            self.grid['y'] = (('nyp','nxp'), latGrid)
+            self.grid.y.attrs['units'] = 'degrees_north'
+
+            # This technique seems to return a Lambert Conformal Projection with the following properties
+            # This only works if the grid does not overlap a polar point
+            # (lat_0 - (dy/2), lat_0 + (dy/2))
+            #self.gridInfo['gridParameters']['projection']['lat_1'] =\
+                #self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
+            #self.gridInfo['gridParameters']['projection']['lat_2'] =\
+               # self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
             self.gridInfo['gridParameters']['projection']['proj'] =\
                     "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
                         (self.gridInfo['gridParameters']['projection']['lat_0'],
                         self.gridInfo['gridParameters']['projection']['lon_0'])
 
+            # Declare the xarray dataset open even though it is really only in memory at this point
+            self.xrOpen = True
+
+            # Compute grid metrics
+            self.computeGridMetrics()
+
+
         # Make a grid in the South Polar Stereo projection
         if self.gridInfo['gridParameters']['projection']['name'] == "SouthPolarStereo":
+            if 'tilt' in self.gridInfo['gridParameters'].keys():
+                tilt = self.gridInfo['gridParameters']['tilt']
+            else:
+                tilt = 0.0
+
+            lonGrid, latGrid = self.generate_regional_spherical(
+                self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
+                self.gridInfo['gridParameters']['projection']['lat_0'], self.gridInfo['gridParameters']['dy'],
+                tilt,
+                self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
+            )
+
+            (nxp, nyp) = lonGrid.shape
+
+            self.grid['x'] = (('nyp','nxp'), lonGrid)
+            self.grid.x.attrs['units'] = 'degrees_east'
+            self.grid['y'] = (('nyp','nxp'), latGrid)
+            self.grid.y.attrs['units'] = 'degrees_north'
+
+            # This technique seems to return a Lambert Conformal Projection with the following properties
+            # This only works if the grid does not overlap a polar point
+            # (lat_0 - (dy/2), lat_0 + (dy/2))
+            #self.gridInfo['gridParameters']['projection']['lat_1'] =\
+                #self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
+            #self.gridInfo['gridParameters']['projection']['lat_2'] =\
+                #self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
             self.gridInfo['gridParameters']['projection']['proj'] =\
-                    "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s +x_0=0.0 +y_0=0.0 +no_defs" %\
+                    "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
                         (self.gridInfo['gridParameters']['projection']['lat_0'],
                         self.gridInfo['gridParameters']['projection']['lon_0'])
+
+            # Declare the xarray dataset open even though it is really only in memory at this point
+            self.xrOpen = True
+
+            # Compute grid metrics
+            self.computeGridMetrics()
+
 
         # Make a grid in the Lambert Conformal Conic projection
         if self.gridInfo['gridParameters']['projection']['name'] == 'LambertConformalConic':
@@ -229,15 +432,16 @@ class GridUtils:
                 tilt = self.gridInfo['gridParameters']['tilt']
             else:
                 tilt = 0.0
+
             lonGrid, latGrid = self.generate_regional_spherical(
                 self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
                 self.gridInfo['gridParameters']['projection']['lat_0'], self.gridInfo['gridParameters']['dy'],
                 tilt,
                 self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
             )
-            
+
             (nxp, nyp) = lonGrid.shape
-            
+
             self.grid['x'] = (('nyp','nxp'), lonGrid)
             self.grid.x.attrs['units'] = 'degrees_east'
             self.grid['y'] = (('nyp','nxp'), latGrid)
@@ -259,9 +463,11 @@ class GridUtils:
 
             # Declare the xarray dataset open even though it is really only in memory at this point
             self.xrOpen = True
-            
+
             # Compute grid metrics
             self.computeGridMetrics()
+       
+
     
     # Original functions provided by Niki Zadeh - Lambert Conformal Conic grids
     # Grid creation and rotation in spherical coordinates
@@ -374,16 +580,20 @@ class GridUtils:
     
     def generate_latlon_mesh_centered(self, lni, lnj, llon0, llen_lon, llat0, llen_lat, ensure_nj_even=True):
         """Generate a regular lat-lon grid"""
-        self.printVerbose('Generating regular lat-lon grid centered at %.2f %.2f on equator.' % (llon0, llat0))
+        msg = 'Generating regular lat-lon grid centered at %.2f %.2f on equator.' % (llon0, llat0)
+        self.printMsg(msg, logging.INFO)
         llonSP = llon0 - llen_lon/2 + np.arange(lni+1) * llen_lon/float(lni)
         llatSP = llat0 - llen_lat/2 + np.arange(lnj+1) * llen_lat/float(lnj)
         if(llatSP.shape[0]%2 == 0 and ensure_nj_even):
-            self.printVerbose("   The number of j's is not even. Fixing this by cutting one row at south.")
+            msg = "   The number of j's is not even. Fixing this by cutting one row at south."
+            self.printMsg(msg, logging.INFO)
             llatSP = np.delete(llatSP,0,0)
         llamSP = np.tile(llonSP,(llatSP.shape[0],1))
         lphiSP = np.tile(llatSP.reshape((llatSP.shape[0],1)),(1,llonSP.shape[0]))
-        self.printVerbose('   Generated regular lat-lon grid between latitudes %.2f %.2f' % (lphiSP[0,0],lphiSP[-1,0]))
-        self.printVerbose('   Number of js=%d' % (lphiSP.shape[0]))
+        msg = '   Generated regular lat-lon grid between latitudes %.2f %.2f' % (lphiSP[0,0],lphiSP[-1,0])
+        self.printMsg(msg, logging.INFO)
+        msg = '   Number of js=%d' % (lphiSP.shape[0])
+        self.printMsg(msg, logging.INFO)
         #h_i_inv=llen_lon*self.PI_180*np.cos(lphiSP*self.PI_180)/lni
         #h_j_inv=llen_lat*self.PI_180*np.ones(lphiSP.shape)/lnj
         #delsin_j = np.roll(np.sin(lphiSP*self.PI_180),shift=-1,axis=0) - np.sin(lphiSP*self.PI_180)
@@ -421,7 +631,7 @@ class GridUtils:
         To access it, use: obj.xrDS or obj.grid'''
         # check if we have a vailid inputFilename
         if not(os.path.isfile(inputFilename)):
-            self.printVerbose("Dataset not found: %s" % (inputFilename))
+            self.printMsg("Dataset not found: %s" % (inputFilename), logging.INFO)
             return
                 
         # If we have a file pointer and it is open, close it and re-open the new file
@@ -433,13 +643,12 @@ class GridUtils:
             self.xrOpen = True
             self.xrFilename = inputFilename
         except:
-            if self.verboseLevel > 0:
-                self.printVerbose("WARNING: Unable to load dataset: %s" % (inputFilename))
+            msg = "WARNING: Unable to load dataset: %s" % (inputFilename)
+            printMsg(msg, logging.WARNING)
             self.xrDS = None
             self.xrOpen = False
-            # Error failed to load file
-            if self.debugLevel > 0:
-                raise
+            # Stop on error to load a file
+            debugMsg("", self.debugLevel)
             
     def readGrid(self, opts={'type': 'MOM6'}, local=None, localFilename=None):
         '''Read a grid.
@@ -482,9 +691,11 @@ class GridUtils:
             
         try:
             self.grid.to_netcdf(self.xrFilename, encoding=self.removeFillValueAttributes())
-            self.printVerbose("Successfully wrote netCDF file to %s" % (self.xrFilename))
+            msg = "Successfully wrote netCDF file to %s" % (self.xrFilename)
+            self.printMsg(msg, logging.INFO)
         except:
-            self.printVerbose("Failed to write netCDF file to %s" % (self.xrFilename))
+            msg = "Failed to write netCDF file to %s" % (self.xrFilename)
+            self.printMsg(msg, logging.INFO)
     
     # Plotting specific functions
     # These functions should not care what grid is loaded. 
@@ -502,16 +713,18 @@ class GridUtils:
         
         return fig
     
+    # insert plotGrid.ipynb here
+    
     def plotGrid(self):
         '''Perform a plot operation.
-        
+
         :return: Returns a tuple of matplotlib objects (figure, axes)
         :rtype: tuple
-        
+
         To plot a grid, you first must have the projection set.
-        
+
         :Example:
-        
+
         >>> grd = gridUtils()
         >>> grd.setPlotParameters(
                 {
@@ -522,80 +735,44 @@ class GridUtils:
                     },
         >>> grd.plotGrid()
         '''
-        
+
         #if not('shape' in self.gridInfo.keys()):
         #    warnings.warn("Unable to plot the grid.  Missing its 'shape'.")
         #    return (None, None)
-        
+
         plotProjection = self.getPlotParameter('name', subKey='projection', default=None)
-        
+
         if not(plotProjection):
             warnings.warn("Please set the plot 'projection' parameter 'name'")
             help(self.plotGrid)
             return (None, None)
-        
-        if plotProjection == 'LambertConformalConic':
-            return (self.plotGridLambertConformalConic())
-        if plotProjection == 'Mercator':
-            return (self.plotGridMercator())
-        if plotProjection == 'NearsidePerspective':
-            return (self.plotGridNearsidePerspective())
-        if plotProjection == 'NorthPolarStereo':
-            return (self.plotGridNorthPolarStereo())
-        
-        warnings.warn("Unable to plot this projection: %s" % (plotProjection))
-        return (None, None)
 
-    def plotGridLambertConformalConic(self):
-        '''Plot a given mesh using Lambert Conformal Conic projection.'''
-        '''Requires: central_latitude, central_longitude and two standard parallels (latitude).'''
+        # initiate new plot, infer projection within the plotting procedure
         f = self.newFigure()
-        central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=-96.0)
+
+        # declare projection options - note that each projection uses a different combination of these parameters and rarely all are used for one projection
+        central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
         central_latitude = self.getPlotParameter('lat_0', subKey='projection', default=39.0)
         lat_1 = self.getPlotParameter('lat_1', subKey='projection', default=33.0)
         lat_2 = self.getPlotParameter('lat_2', subKey='projection', default=45.0)
         standard_parallels = (lat_1, lat_2)
-        crs = cartopy.crs.LambertConformal(
-                central_longitude=central_longitude, central_latitude=central_latitude,
-                standard_parallels=standard_parallels)
-        ax = f.subplots(subplot_kw={'projection': crs})
-        mapExtent = self.getPlotParameter('extent', default=[])
-        mapCRS = self.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
-        if len(mapExtent) == 0:
-            ax.set_global()
-        else:
-            ax.set_extent(mapExtent, crs=mapCRS)
-        ax.stock_img()
-        ax.coastlines()
-        ax.gridlines()
-        title = self.getPlotParameter('title', default=None)
-        if title:
-            ax.set_title(title)
-        nj = self.grid.dims['nyp']
-        ni = self.grid.dims['nxp']
-        plotAllVertices = self.getPlotParameter('showGridCells', default=False)
-        iColor = self.getPlotParameter('iColor', default='k')
-        jColor = self.getPlotParameter('jColor', default='k')
-        transform = self.getPlotParameter('transform', default=cartopy.crs.Geodetic())
-        iLinewidth = self.getPlotParameter('iLinewidth', default=1.0)
-        jLinewidth = self.getPlotParameter('jLinewidth', default=1.0)
-        
-        # plot vertices
-        for i in range(0,ni+1,2):
-            if (i == 0 or i == (ni-1)) or plotAllVertices:
-                ax.plot(self.grid['x'][:,i], self.grid['y'][:,i], iColor, linewidth=iLinewidth, transform=transform)
-        for j in range(0,nj+1,2):
-            if (j == 0 or j == (nj-1)) or plotAllVertices:
-                ax.plot(self.grid['x'][j,:], self.grid['y'][j,:], jColor, linewidth=jLinewidth, transform=transform)
-        
-        return f, ax
+        satellite_height = self.getPlotParameter('satellite_height', default=35785831)
+        true_scale_latitude = self.getPlotParameter('lat_ts', subKey='projection', default=75.0)
 
-    def plotGridMercator(self):
-        '''Plot a given mesh using Mercator projection.'''
-        f = self.newFigure()
-        central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
-        crs = cartopy.crs.Mercator(
-                central_longitude=central_longitude)
+        # declare varying crs based on plotProjection
+        if plotProjection == 'LambertConformalConic':
+            crs = cartopy.crs.LambertConformal(
+            central_longitude=central_longitude, central_latitude=central_latitude,
+            standard_parallels=standard_parallels)
+        if plotProjection == 'Mercator':
+            crs = cartopy.crs.Mercator(central_longitude=central_longitude)
+        if plotProjection == 'NearsidePerspective':
+            crs = cartopy.crs.NearsidePerspective(central_longitude=central_longitude, central_latitude=central_latitude, satellite_height=satellite_height)
+        if plotProjection == 'NorthPolarStereo':
+            crs = cartopy.crs.NorthPolarStereo(central_longitude=central_longitude, true_scale_latitude=true_scale_latitude)
+        if plotProjection == 'SouthPolarStereo':
+            crs = cartopy.crs.SouthPolarStereo(central_longitude=central_longitude, true_scale_latitude=true_scale_latitude)
+
         ax = f.subplots(subplot_kw={'projection': crs})
         mapExtent = self.getPlotParameter('extent', default=[])
         mapCRS = self.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
@@ -617,7 +794,7 @@ class GridUtils:
         transform = self.getPlotParameter('transform', default=cartopy.crs.Geodetic())
         iLinewidth = self.getPlotParameter('iLinewidth', default=1.0)
         jLinewidth = self.getPlotParameter('jLinewidth', default=1.0)
-        
+
         # plotting vertices
         # For a non conforming projection, we have to plot every line between the points of each grid box
         for i in range(0,ni+1,2):
@@ -626,89 +803,13 @@ class GridUtils:
         for j in range(0,nj+1,2):
             if (j == 0 or j == (nj-1)) or plotAllVertices:
                 ax.plot(self.grid['x'][j,:], self.grid['y'][j,:], jColor, linewidth=jLinewidth, transform=transform)
-                
+
+        warnings.warn("Unable to plot this projection: %s" % (plotProjection))
         return f, ax
     
-    def plotGridNearsidePerspective(self):
-        """Plot a given mesh using the nearside perspective centered at (central_longitude,central_latitude)"""
-        f = self.newFigure()
-        central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
-        central_latitude = self.getPlotParameter('lat_0', subKey='projection', default=90.0)
-        satellite_height = self.getPlotParameter('satellite_height', default=35785831)
-        crs = cartopy.crs.NearsidePerspective(central_longitude=central_longitude, central_latitude=central_latitude, satellite_height=satellite_height)
-        ax = f.subplots(subplot_kw={'projection': crs})
-        if self.usePaneMatplotlib:
-            FigureCanvas(f)
-        mapExtent = self.getPlotParameter('extent', default=[])
-        mapCRS = self.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
-        if len(mapExtent) == 0:
-            ax.set_global()
-        else:
-            ax.set_extent(mapExtent, crs=mapCRS)
-        ax.stock_img()
-        ax.coastlines()
-        ax.gridlines()
-        title = self.getPlotParameter('title', default=None)
-        if title:
-            ax.set_title(title)
-        nj = self.grid.dims['nyp']
-        ni = self.grid.dims['nxp']
-        plotAllVertices = self.getPlotParameter('showGridCells', default=False)
-        iColor = self.getPlotParameter('iColor', default='k')
-        jColor = self.getPlotParameter('jColor', default='k')
-        transform = self.getPlotParameter('transform', default=cartopy.crs.Geodetic())
-        iLinewidth = self.getPlotParameter('iLinewidth', default=1.0)
-        jLinewidth = self.getPlotParameter('jLinewidth', default=1.0)
-        
-        # plotting vertices
-        # For a non conforming projection, we have to plot every line between the points of each grid box
-        for i in range(0,ni+1,2):
-            if (i == 0 or i == (ni-1)) or plotAllVertices:
-                ax.plot(self.grid.x[:,i], self.grid.y[:,i], iColor, linewidth=iLinewidth, transform=transform)
-        for j in range(0,nj+1,2):
-            if (j == 0 or j == (nj-1)) or plotAllVertices:
-                ax.plot(self.grid.x[j,:], self.grid.y[j,:], jColor, linewidth=jLinewidth, transform=transform)
-                
-        return f, ax
-        
-    def plotGridNorthPolarStereo(self):
-        '''Generic plotting function for North Polar Stereo maps'''
-        f = self.newFigure()
-        central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
-        true_scale_latitude = self.getPlotParameter('lat_ts', subKey='projection', default=75.0)
-        crs = cartopy.crs.NorthPolarStereo(central_longitude=central_longitude, true_scale_latitude=true_scale_latitude)
-        ax = f.subplots(subplot_kw={'projection': crs})
-        mapExtent = self.getPlotParameter('extent', default=[])
-        mapCRS = self.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
-        if len(mapExtent) == 0:
-            ax.set_global()
-        else:
-            ax.set_extent(mapExtent, crs=mapCRS)
-        ax.stock_img()
-        ax.coastlines()
-        ax.gridlines()
-        title = self.getPlotParameter('title', default=None)
-        if title:
-            ax.set_title(title)
-        nj = self.grid.dims['nyp']
-        ni = self.grid.dims['nxp']
-        plotAllVertices = self.getPlotParameter('showGridCells', default=False)
-        iColor = self.getPlotParameter('iColor', default='k')
-        jColor = self.getPlotParameter('jColor', default='k')
-        transform = self.getPlotParameter('transform', default=cartopy.crs.Geodetic())
-        iLinewidth = self.getPlotParameter('iLinewidth', default=1.0)
-        jLinewidth = self.getPlotParameter('jLinewidth', default=1.0)
-        
-        # plot vertices
-        for i in range(0,ni+1,2):
-            if (i == 0 or i == (ni-1)) or plotAllVertices:
-                ax.plot(self.grid['x'][:,i], self.grid['y'][:,i], iColor, linewidth=iLinewidth, transform=transform)
-        for j in range(0,nj+1,2):
-            if (j == 0 or j == (nj-1)) or plotAllVertices:
-                ax.plot(self.grid['x'][j,:], self.grid['y'][j,:], jColor, linewidth=jLinewidth, transform=transform) 
-                
-        return f, ax
-        
+
+
+
     # Grid parameter operations
 
     def clearGridParameters(self):
@@ -931,21 +1032,21 @@ class GridUtils:
         # For now pass all keys into the plot parameter dictionary.  Sanity checking is done
         # by the respective plotGrid* fuctions.
         for k in plotParameters.keys():
-            if subKey:
-                self.gridInfo['plotParameters'][subKey][k] = plotParameters[k]
-            else:
-                try:
+            try:
+                if subKey:
+                    self.gridInfo['plotParameters'][subKey][k] = plotParameters[k]
+                else:
                     self.gridInfo['plotParameters'][k] = plotParameters[k]
-                except:
-                    if self.debugLevel > 0:
-                        pdb.set_trace()
-                    raise
+            except:
+                debugMsg('Failed to assign a plotParameter(%s) with "%s"' %\
+                        (k, plotParameters[k]), self.debugLevel)
+                raise
 
         if not(subKey):
             self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
 
     # Functions from pyroms/examples/grid_MOM6/convert_ROMS_grid_to_MOM6.py
     # Attribution: Mehmet Ilicak via Alistair Adcroft
-    # Requires Spherical.py (copied to local lib)
+    # Requires spherical.py (copied to local lib)
     # Based on code written by Alistair Adcroft and Matthew Harrison of GFDL
     

@@ -2,9 +2,9 @@
 
 # Modules
 
+import os, sys, io, logging
 import numpy as np
 import cartopy.crs as ccrs
-import os, sys, io
 import cartopy
 import matplotlib.pyplot as plt
 import netCDF4 as nc
@@ -23,7 +23,7 @@ class App:
     def __init__(self, grd=None):
         # Globals
         
-        # Applications own copy of GridTools() object
+        # This application has its own copy of GridTools() object
         self.grd = grd
 
         # Default grid filename
@@ -64,7 +64,7 @@ class App:
         self.plotLineStyles = ['solid', 'dotted', 'dashed', 'dashdot']
         self.plotLineStylesDescriptions = ['Solid', 'Dotted', 'Dashed', 'DashDot']
         self.plotLineStyleDict = dict(zip(self.plotLineStylesDescriptions, self.plotLineStyles))
-
+        
         # This controls the default figure size of the plot in the panel application
         # TODO: Improve integration
         # aspect 4:3, default dpi=144
@@ -73,15 +73,27 @@ class App:
         self.defaultPlotFigureSize = (self.widthIn, self.heightIn)
 
         # plotWidgetWidth and plotWidgetHeight
-        # used by other controls
+        # NOTE: These values are used by other controls
         self.plotWidgetWidth = 800
         self.plotWidgetHeight = 600
+
+        # Setup for other internals of GridTools()
+        self.useNumpyPi = False
+        self.enableLogging = False
+        self.loggingFilename = None
+        self.verboseLevel = 0
+        self.debugLevel = 0
         
         self.initializeWidgets()
         self.initializeTabs()
         self.initializeDashboard()
 
     # Panel application functions
+
+    def clearInformationWindow(self, event):
+        self.grd.clearMessage()
+        self.statusWidget.value = self.grd.showMessages()
+        return
 
     def updateDataView(self):
         self.dataView[0] = self.grd.grid
@@ -103,19 +115,22 @@ class App:
 
     def loadLocalGrid(self, event):
         if self.localFileSelection.value == None:
-            self.statusWidget.value = "A grid file has not been selected in the Local File tab."
+            msg = "A grid file has not been selected in the Local File tab."
+            self.grd.printMsg(msg, logging.INFO)
             return
 
         # Test to see if xarray can load the selected file
         try:
             ncTest = xr.load_dataset(localFileSelection.value)
-            self.statusWidget.value = "The grid file %s was loaded." % (self.localFileSelection.filename)
+            msg = "The grid file %s was loaded." % (self.localFileSelection.filename)
+            self.grd.printMsg(msg, logging.INFO)
             self.grd.clearGrid()
             self.grd.readGrid(local=ncTest, localFilename=self.localFileSelection.filename)
             self.updateDataView()
             self.updateFilename(self.localFileSelection.filename)
         except:
-            self.statusWidget.value = "The grid file %s was not loadable." % (self.localFileSelection.filename)
+            msg = "The grid file %s was not loadable." % (self.localFileSelection.filename)
+            self.grd.printMsg(msg, logging.ERROR)
 
         return
     
@@ -123,18 +138,21 @@ class App:
         ct = len(self.remoteFileSelection.value)
 
         if ct == 0:
-            self.statusWidget.value = "A grid file has not been selected in the Remote File tab."
+            msg = "A grid file has not been selected in the Remote File tab."
+            self.grd.printMsg(msg, logging.INFO)
             return
 
         try:
             fileToOpen = self.remoteFileSelection.value[0]
             self.grd.openDataset(self.remoteFileSelection.value[0])
             self.grd.readGrid()
-            self.statusWidget.value = "The grid file %s was loaded." % (fileToOpen)
+            msg = "The grid file %s was loaded." % (fileToOpen)
+            self.grd.printMsg(msg, logging.INFO)
             self.updateDataView()
             self.updateFilename(fileToOpen)
         except:
-            self.statusWidget.value = "Failed to load grid file: %s" % (fileToOpen)
+            msg = "Failed to load grid file: %s" % (fileToOpen)
+            self.grd.printMsg(msg, logging.ERROR)
 
         return
 
@@ -143,8 +161,9 @@ class App:
         self.grd.saveGrid(filename=self.gridFilenameRemote.value)
 
     def make_grid(self, event):
-        updateMessage = "No additional information."
-        self.statusWidget.value = "Running make_grid()"
+        updateMessage = "Nothing happened."
+        msg = "Running make_grid()"
+        self.grd.printMsg(msg, logging.INFO)
         self.grd.clearGrid()
         self.grd.setGridParameters({
             'projection': {
@@ -175,12 +194,14 @@ class App:
             self.glat1.value = self.grd.gridInfo['gridParameters']['projection']['lat_1']
             self.glat2.value = self.grd.gridInfo['gridParameters']['projection']['lat_2']
 
-        self.statusWidget.value = "Make grid succeeded: %s" % (updateMessage)
+        msg = "Make grid succeeded: %s" % (updateMessage)
+        self.grd.printMsg(msg, logging.INFO)
 
         return
 
     def make_plot(self):
-        self.statusWidget.value = "Running make_plot()"
+        msg = "Running make_plot()"
+        self.grd.printMsg(msg, logging.INFO)
 
         if self.plotTitle.value != "":
             mp_title = plotTitle.value
@@ -225,14 +246,56 @@ class App:
         )
         if self.grd.xrOpen:
             (figure, axes) = self.grd.plotGrid()
+            msg = "Running make_plot(): done"     
+            self.grd.printMsg(msg, logging.INFO)
         else:
-            figure = self.grd.newFigure()
-            self.statusWidget.value = "Running make_plot(): plotting failure"
-            return figure
+            (figure, axes) = self.errorFigure()
+            msg = "Running make_plot(): plotting failure"
+            self.grd.printMsg(msg, logging.ERROR)
 
-        self.statusWidget.value = "Running make_plot(): done"       
         return figure
 
+    
+    def errorFigure(self):
+        '''Create Blank Plot to signal plotting failure. This signals a problem within the user specifications in relation to code capabilities.  '''
+        
+        f = self.grd.newFigure()
+        central_longitude = self.grd.getPlotParameter('lon_0', subKey='projection', default=0.0)
+        central_latitude = self.grd.getPlotParameter('lat_0', subKey='projection', default=90.0)
+        satellite_height = self.grd.getPlotParameter('satellite_height', default=35785831)
+        crs = cartopy.crs.NearsidePerspective(central_longitude=central_longitude, central_latitude=central_latitude, satellite_height=satellite_height)
+        ax = f.subplots(subplot_kw={'projection': crs})
+        if self.grd.usePaneMatplotlib:
+            FigureCanvas(f)
+        mapExtent = self.grd.getPlotParameter('extent', default=[])
+        mapCRS = self.grd.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
+        ax.set_global()
+        ax.coastlines()
+        ax.gridlines()
+        ax.set_title("Plot Failure", color='red')
+        ax.text(0.5, 0.4, 'please check plot/grid parameters and retry', transform=ax.transAxes,
+                fontsize=10, color='red', alpha=0.2,
+                ha='center', va='center', rotation='0')
+        return f, ax
+    
+    def initializePlot(self):
+        ''' Plot the initial image upon loading up the application. This is developed to differentiate between plot failure and the first plot.'''
+        f = self.grd.newFigure()
+        satellite_height = self.grd.getPlotParameter('satellite_height', default=35785831)
+        crs = cartopy.crs.NearsidePerspective(central_longitude=290, central_latitude=30, satellite_height=satellite_height)
+        ax = f.subplots(subplot_kw={'projection': crs})
+        if self.grd.usePaneMatplotlib:
+            FigureCanvas(f)
+        mapExtent = self.grd.getPlotParameter('extent', default=[])
+        mapCRS = self.grd.getPlotParameter('extentCRS', default=cartopy.crs.PlateCarree())
+        ax.set_global()
+        ax.stock_img()
+        ax.coastlines()
+        ax.gridlines()
+        ax.set_title("Welcome! Please specify your grid and plot parameters")
+
+        return f
+    
     def plotRefresh(self, event):
         self.plotWindow.object = self.make_plot()
         return
@@ -242,7 +305,10 @@ class App:
 
         pageMain = pn.WidgetBox('''
         # Instructions
-        This will be the eventual location for the instruction manual.
+        This will be the eventual location for the instruction manual for this application.  Information
+        found here will mostly pertain to the operation of this application.  Additional details about
+        the MOM6 model can be found in the [MOM6 User Manual](https://mom6.readthedocs.io/){target="_blank"}.
+        
         ''', width=self.plotWidgetWidth)
 
         pageGrids = pn.WidgetBox('''
@@ -251,8 +317,8 @@ class App:
         ## Grid Reference
         This controls how the grid is grown from the selected latitude (lat0) and longitude (lon0) using
         degrees or x (x0) or y (y0) using meters.  By default, the grid is grown from the center point
-        in both directions based on the size (dy, dx) and grid resolution.  In the future, grids may
-        be build with other fixed points of reference.
+        in both directions based on the size (dy, dx) and grid resolution.  For now, dy and dx can only
+        operate in degrees.  In the future, grids may be build with other fixed points of reference.
 
         ## Grid Type
         For now, only MOM6 is supported.  Other grid types may be possible in the future.
@@ -263,25 +329,30 @@ class App:
         grid cells.  At present, this mode should not be anything other than 2 for MOM6 grids.
 
         ## Grid Representation
-        Here is a representation of a (2,3) MOM6 grid from convert_ROMS_grid_to_MOM6.py
-        by Mehmet Ilicak and Alistair Adcroft.
+        Here is a representation of a (2, 3) MOM6 grid adapted from convert_ROMS_grid_to_MOM6.py
+        by Mehmet Ilicak and Alistair Adcroft.  NOTE: The MOM6 supergrid is (5, 7) in shape.
 
-        ```
-         3    + | + | + | +
-              - p - p - p -
-         2    + | + | + | +
-              - p - p - p -
-         1    + | + | + | +
+        ```text
+          G SG
+             5 + | + | + | +
+          2  4 - p - p - p -
+             3 + | + | + | +
+          1  2 - p - p - p -
+             1 + | + | + | +
+                 1   2   3    G
+               1 2 3 4 5 6 7  SG
 
-              1   2   3   4
-
-        KEY: p = rho (center) points
-             + = psi (corner) points
-             - = u points
-             | = v points
+        KEY: p = ROMS rho (center) points; also MOM6 h (center) points
+             + = ROMS psi (corner) points
+             - = ROMS u points
+             | = ROMS v points
+             G = grid points
+            SG = supergrid points
         ```
 
         A MOM6 grid of (ny, nx) will have (ny\*2+1, nx\*2+1) points on the supergrid.
+        NOTE: In python, array storage is zero based.  In the above example, supergrid 
+        point (1, 1) is stored in memory location (0, 0).
         ''', width=self.plotWidgetWidth)
 
         manualTabs.extend([
@@ -293,7 +364,12 @@ class App:
     
     def initializeWidgets(self):
         # Widgets
-        self.statusWidget = pn.widgets.TextAreaInput(name='Information', value="", background="skyblue", height=100)
+        
+        # The text area input box can show many lines and automatically adds a scroll bar for a long message
+        self.statusWidget = pn.widgets.TextAreaInput(name='Information', value="", background="skyblue", height=100,
+                width=self.plotWidgetWidth+100)
+        self.clearLogButton = pn.widgets.Button(name='Clear Information', button_type='primary', height=50, width=125)
+        self.clearLogButton.on_click(self.clearInformationWindow)
 
         # Grid Controls
         # Use: Niki's defaults for rapid testing
@@ -390,7 +466,7 @@ class App:
 
         # The plot itself wrapped in a widget
         # Use panel.pane.Matplotlib(matplotlib.figure)
-        self.plotWindow = pn.pane.Matplotlib(self.make_plot(), width=self.plotWidgetWidth, height=self.plotWidgetHeight)
+        self.plotWindow = pn.pane.Matplotlib(self.initializePlot(), width=self.plotWidgetWidth, height=self.plotWidgetHeight)
 
         # This presents a data view summary of the xarray object
         self.dataView = pn.Column(self.grd.grid, width=self.plotWidgetWidth)
@@ -420,7 +496,7 @@ class App:
         self.gridSpacingControls = pn.WidgetBox('# Grid Spacing', self.dx, self.dy, self.gridResolution, self.dxdyUnits, self.gridControlUpdateButton)
         self.gridAdvancedControls = pn.WidgetBox(
             """
-            See Grids in the Manual tab for details about these controls.
+            See "Grids" Manual tab for details about these controls.
             ## Grid Reference
             """, self.xGridControl, self.yGridControl, """    
             ## Grid Type
@@ -440,7 +516,7 @@ class App:
         # Grid
         #  Projection
         #  Spacing
-        #  Reference
+        #  Advanced
         self.plotControlTabs.extend([
             ('Projection', self.plotProjectionControls),
             ('Extent', self.plotExtentControls),
@@ -502,7 +578,7 @@ class App:
 
         # Pull all the final dashboard together in an application
         self.dashboard = pn.WidgetBox(
-            pn.Column(self.statusWidget, sizing_mode='stretch_width', width_policy='max'),
+            pn.Column(pn.Row(self.clearLogButton, self.statusWidget), sizing_mode='stretch_width', width_policy='max'),
             pn.Row(self.controlTabs, self.displayTabsAlt)
         )
         

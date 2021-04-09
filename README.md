@@ -124,7 +124,7 @@ $ conda env export > conda/pyroms_export.yml
 
 For a quicker recovery of a conda environment, use the exported YAML file:
 ```
-$ conda env remove --name pyroms --all
+$ conda env remove --name pyroms
 $ conda env create conda/pyroms_export.yaml
 ```
 

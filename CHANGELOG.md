@@ -1,5 +1,27 @@
 # Change Log
 
+# 2021-04-08
+
+ - Experimentation with panel.pane.HTML did not work pan out.  No great control over width and height.
+   Text updates did not automatically resize the window.  The TextAreaInput automatically adds a
+   scrollbar to the box when enough lines are added to the window.
+ - Add application Setup tab for other obscure toolset options; add setter and getter methods in GridUtils()
+   - Use numpypi: True/False
+   - Enable logging: True/False
+   - Specify logfile: "filename"
+   - Specify verbose level
+   - Specify debug level
+ - Fixed up documentation of Grid Representation in the app manual.
+ - Panel markdown honors the usage of options after a link. 
+   Ex: [MOM6 User Manual](https://mom6.readthedocs.io/){target="\_blank"}
+ - Testing of new printMsg facility is working.
+ - Added a clear information button to clear the inforamtion window.
+
+# 2021-04-07
+
+ - Move Spherical.py to spherical.py to match coding standards
+ - Use R from GridUtils class in spherical
+
 # 2021-04-03
 
  - BUG: add ccrs.SouthPolarStereo() to projCarto
