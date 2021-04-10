@@ -113,6 +113,26 @@ class GridUtils:
         else:
             self.usePaneMatplotlib = False
 
+    def adjustExternalLoggers(self):
+        '''This adjusts some noisy loggers from other python modules.'''
+
+        # Readjust logger levels to specific noisy modules
+        noisyModules = {
+                'PIL.PngImagePlugin': logging.ERROR,
+                'fiona._env': logging.ERROR,
+                'fiona.collection': logging.ERROR,
+                'fiona.env': logging.ERROR,
+                'fiona.ogrext': logging.ERROR,
+                'matplotlib.backends.backend_pdf': logging.ERROR,
+                'matplotlib.font_manager': logging.ERROR,
+        }
+
+        for moduleName in noisyModules.keys():
+            lh = logging.getLogger(moduleName)
+            lh.setLevel(noisyModules[moduleName])
+
+        return
+
     def clearMessage(self):
         '''This clears the message buffer of messages.'''
         self.msgBuffer = []
@@ -139,7 +159,7 @@ class GridUtils:
         if level >= 1 and msg != "":
             # Send the message at the DEBUG level if 
             # the message is not empty
-            printMsg(msg, level=logging.DEBUG)
+            self.printMsg(msg, level=logging.DEBUG)
 
         if level == 2:
             raise
@@ -149,29 +169,69 @@ class GridUtils:
 
         return
 
-    def enableLogging(self, logFilename):
-        '''Enable logging of messages to a file'''
-        # Test to see if we can write to the log file
-        try:
-            fn = open(logFile, 'a')
-        except:
-            printMsg("Failed to open logfile (%s)" % (logFilename), logging.CRITICAL)
+    def deleteLogfile(self, logFilename):
+        '''Delete a log file.  Logging must be off.'''
+        if self.msgLogger:
+            self.printMsg("Logging active: Unable to delete log file.", logging.ERROR)
+            return
 
-        fn.close()
-        logging.basicConfig(filename=logFilename, encoding='utf-8', level=self.msgLogLevel)
-        logging.info("Logging enabled")
-        self.msgLogger = True
+        if not(os.path.isfile(logFilename)):
+            self.printMsg("Logfile (%s) does not exist." % (logFilename), logging.ERROR)
+            return
+
+        os.unlink(logFilename)
+        self.printMsg("Logfile (%s) removed." % (logFilename), logging.INFO)
 
     def disableLogging(self):
         '''Disable logging of messages to a file'''
-        logging.info("Logging disabled")
-        logging.shutdown()
+        self.logHandle.disable = True
+        self.logHandle = None
         self.msgLogger = False
+        self.printMsg("Logging disabled", logging.INFO)
+
+    def enableLogging(self, logFilename):
+        '''Enable logging of messages to a file'''
+
+        # Do not permit re-enabling a logging event if logging is already been activated
+        if self.msgLogger:
+            self.printMsg("Logging already active.  Ignoring request.", logging.ERROR)
+            return
+
+        # Test to see if we can write to the log file
+        success = False
+        try:
+            fn = open(logFilename, 'a')
+            success = True
+        except:
+            self.printMsg("Failed to open logfile (%s)" % (logFilename), logging.CRITICAL)
+            return
+
+        if success:
+            fn.close()
+
+        logging.basicConfig(filename=logFilename, level=self.msgLogLevel)
+        self.adjustExternalLoggers()
+        self.logHandle = logging.getLogger(__name__)
+        self.logHandle.disabled = False
+        self.msgLogger = True
+        self.printMsg("Logging enabled", logging.INFO)
+
+    def filterLogMessages(self, record):
+        '''This may not be needed after all.'''
+        print(">>",record.name,__name__)
+        if record.name == __name__:
+            return True
+        return False
 
     def getDebugLevel(self):
-        '''Get the current debug level for GridUtils().  Debug levels that are currently
-        defined are: '''
+        '''Get the current debug level for GridUtils().  See setDebugLevel() for available
+        levels.'''
         return self.debugLevel
+
+    def getLogLevel(self):
+        '''Get the current debug level for GridUtils().  See setDebugLevel() for available
+        levels.'''
+        return self.msgLogLevel
 
     def getVerboseLevel(self):
         '''Get the current verbose level for GridUtils()'''
@@ -185,22 +245,39 @@ class GridUtils:
         will default to INFO.
         '''
 
+        if self.debugLevel >= 1:
+            print(">>(%s)(%d)(%d)" % (msg, level, self.verboseLevel))
+
         # If logging is enabled, send it to the logger
         if self.msgLogger:
-            logging.log(level, msg)
+            self.logHandle.log(level, msg)
 
         if level >= self.verboseLevel:
-           self.addMessage(msg)
+            self.addMessage(msg)
 
-           # Always update the application message box
-           # If we don't have a msgBox, then print to STDOUT.
-           if hasattr(self, 'msgBox'):
-               if self.msgBox:
-                   self.msgBox.value = self.showMessages()
-           else:
-               print(msg)
+            # Always update the application message box
+            # If we don't have a msgBox, then print to STDOUT.
+            if hasattr(self, 'msgBox'):
+                if self.msgBox:
+                    self.msgBox.value = self.showMessages()
+                else:
+                    print(msg)
+            else:
+                print(msg)
 
         return
+
+    def showLoggers(self):
+        '''Display an alphabetical list of loggers.  Messages sent at the
+        INFO level.'''
+
+        # List of all known loggers: logging.Logger.manager.loggerDict
+        loggerNames = list(logging.Logger.manager.loggerDict)
+        loggerNames.sort()
+        for loggerName in loggerNames:
+            logger = logging.getLogger(loggerName)
+            msg = "%-40s : %s" % (logger.name, logging.getLevelName(logger.getEffectiveLevel()))
+            self.printMsg(msg, logging.INFO)
 
     def showMessages(self):
         '''This converts the message buffer to text with linefeeds.'''
@@ -226,6 +303,23 @@ class GridUtils:
                 3=stop at breakpoints
         '''
         self.debugLevel = newLevel
+    
+    def setLogLevel(self, newLevel):
+        '''Set a new verbose level.
+
+        :param newLevel: verbose level to set or update
+        :type newLevel: integer
+        :return: none
+        :rtype: none
+        
+        .. note::
+            Setting this to a positive number will increase the feedback from this
+            module.
+        '''
+        self.msgLogLevel = newLevel
+        # Also update the logger, if active
+        if self.msgLogger:
+            self.logHandle.setLevel(newLevel)
     
     def setVerboseLevel(self, newLevel):
         '''Set a new verbose level.
@@ -643,8 +737,8 @@ class GridUtils:
             self.xrOpen = True
             self.xrFilename = inputFilename
         except:
-            msg = "WARNING: Unable to load dataset: %s" % (inputFilename)
-            printMsg(msg, logging.WARNING)
+            msg = "ERROR: Unable to load dataset: %s" % (inputFilename)
+            self.printMsg(msg, logging.ERROR)
             self.xrDS = None
             self.xrOpen = False
             # Stop on error to load a file
@@ -743,14 +837,16 @@ class GridUtils:
         plotProjection = self.getPlotParameter('name', subKey='projection', default=None)
 
         if not(plotProjection):
-            warnings.warn("Please set the plot 'projection' parameter 'name'")
-            help(self.plotGrid)
+            msg = "Please set the plot 'projection' parameter 'name'"
+            self.printMsg(msg, logging.ERROR)
+            #warnings.warn("Please set the plot 'projection' parameter 'name'")
             return (None, None)
 
         # initiate new plot, infer projection within the plotting procedure
         f = self.newFigure()
 
-        # declare projection options - note that each projection uses a different combination of these parameters and rarely all are used for one projection
+        # declare projection options - note that each projection uses a different
+        # combination of these parameters and rarely all are used for one projection
         central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
         central_latitude = self.getPlotParameter('lat_0', subKey='projection', default=39.0)
         lat_1 = self.getPlotParameter('lat_1', subKey='projection', default=33.0)
@@ -760,6 +856,7 @@ class GridUtils:
         true_scale_latitude = self.getPlotParameter('lat_ts', subKey='projection', default=75.0)
 
         # declare varying crs based on plotProjection
+        crs = None
         if plotProjection == 'LambertConformalConic':
             crs = cartopy.crs.LambertConformal(
             central_longitude=central_longitude, central_latitude=central_latitude,
@@ -767,11 +864,20 @@ class GridUtils:
         if plotProjection == 'Mercator':
             crs = cartopy.crs.Mercator(central_longitude=central_longitude)
         if plotProjection == 'NearsidePerspective':
-            crs = cartopy.crs.NearsidePerspective(central_longitude=central_longitude, central_latitude=central_latitude, satellite_height=satellite_height)
+            crs = cartopy.crs.NearsidePerspective(central_longitude=central_longitude,
+                central_latitude=central_latitude, satellite_height=satellite_height)
         if plotProjection == 'NorthPolarStereo':
-            crs = cartopy.crs.NorthPolarStereo(central_longitude=central_longitude, true_scale_latitude=true_scale_latitude)
+            crs = cartopy.crs.NorthPolarStereo(central_longitude=central_longitude,
+                true_scale_latitude=true_scale_latitude)
         if plotProjection == 'SouthPolarStereo':
-            crs = cartopy.crs.SouthPolarStereo(central_longitude=central_longitude, true_scale_latitude=true_scale_latitude)
+            crs = cartopy.crs.SouthPolarStereo(central_longitude=central_longitude,
+                true_scale_latitude=true_scale_latitude)
+
+        if crs == None:
+            #warnings.warn("Unable to plot this projection: %s" % (plotProjection))
+            msg = "Unable to plot this projection: %s" % (plotProjection)
+            self.printMsg(msg, logging.ERROR)
+            return (None, None)
 
         ax = f.subplots(subplot_kw={'projection': crs})
         mapExtent = self.getPlotParameter('extent', default=[])
@@ -804,11 +910,7 @@ class GridUtils:
             if (j == 0 or j == (nj-1)) or plotAllVertices:
                 ax.plot(self.grid['x'][j,:], self.grid['y'][j,:], jColor, linewidth=jLinewidth, transform=transform)
 
-        warnings.warn("Unable to plot this projection: %s" % (plotProjection))
         return f, ax
-    
-
-
 
     # Grid parameter operations
 
@@ -816,10 +918,10 @@ class GridUtils:
         '''Clear grid parameters.  This does not erase any grid data.'''
         self.gridInfo['gridParameters'] = {}
         self.gridInfo['gridParameterKeys'] = self.gridInfo['gridParameters'].keys()
-        
+
     def deleteGridParameters(self, gList, subKey=None):
         """This deletes a given list of grid parameters."""
-        
+
         # Top level subkeys
         if subKey:
             if subKey in self.gridInfo['gridParameterKeys']:
@@ -828,7 +930,7 @@ class GridUtils:
                     if k in subKeys:
                         self.gridInfo[subKey].pop(k, None)
             return
-        
+
         # Top level keys
         for k in gList:
             if k in self.gridInfo['gridParameterKeys']:
@@ -925,11 +1027,11 @@ class GridUtils:
     def showGridParameters(self):
         """Show current grid parameters."""
         if len(self.gridInfo['gridParameterKeys']) > 0:
-            print("Current grid parameters:")
+            self.printMsg("Current grid parameters:", logging.INFO)
             for k in self.gridInfo['gridParameterKeys']:
-                print("%20s: %s" % (k,self.gridInfo['gridParameters'][k]))
+                self.printMsg("%20s: %s" % (k,self.gridInfo['gridParameters'][k]), logging.INFO)
         else:
-            print("No grid parameters found.")
+            self.printMsg("No grid parameters found.", logging.INFO)
     
     # Plot parameter operations
         
@@ -965,7 +1067,9 @@ class GridUtils:
                     if pkey in self.gridInfo['plotParameters'][subKey].keys():
                         return self.gridInfo['plotParameters'][subKey][pkey]
                 except:
-                    warnings.warn("Attempt to use a subkey(%s) which is not really a subkey? or maybe it should be?" % (subKey))
+                    #warnings.warn("Attempt to use a subkey(%s) which is not really a subkey? or maybe it should be?" % (subKey))
+                    msg = "Attempt to use a subkey(%s) which is not really a subkey? or maybe it should be?" % (subKey)
+                    self.printMsg(msg, logging.WARNING)
             return default
         
         # Top level key access

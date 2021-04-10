@@ -3,7 +3,7 @@
 These are people, references and bookmarks that provided useful information to make this project go.
 
 ## Alistair Adcroft
- * numpypi: https://github.com/adcroft/numpypi/tree/master
+ * numpypi: https://github.com/adcroft/numpypi
 
 ## Mehmet Ilicak; Alistair Adcroft; Matthew Harrison
  * ROMS to MOM6 grid converter
@@ -27,3 +27,5 @@ These are people, references and bookmarks that provided useful information to m
  * https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
  * https://github.com/binder-examples/conda
  * https://www.kite.com/python/answers/how-to-hide-a-figure-from-being-shown-in-matplotlib-in-python
+ * https://stackoverflow.com/questions/51357691/python-logging-only-for-own-imported-modules
+ * https://stackoverflow.com/questions/32234156/how-to-unimport-a-python-module-which-is-already-imported

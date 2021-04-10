@@ -37,6 +37,7 @@ A milestone for version 1.0 has yet to be established.
 
  - [X] Further consolidate matplotlib plotting code
    - [X] Refactor plotting code.  It is mostly the same except for setting the projection.
+ - [ ] Add "Refresh Plot" buttons to other Plot tabs
  - [ ] Do we have to declare everything in __init__ first or can be push all that to respective reset/clear functions?
  - [ ] refactor refineS and refineR options as Niki had them defined; allow working in meters too
  - [ ] makeGrid assumes degrees at this point.

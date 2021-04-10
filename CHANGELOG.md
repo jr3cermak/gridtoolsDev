@@ -1,16 +1,36 @@
 # Change Log
 
+# 2021-04-09
+
+ - Fix warning in GridUtils.plotGrid()
+ - Change warnings to logging.WARNING messages
+ - Moved all print statements to printMsg calls
+ - Fix printing to STDOUT when msgBox is not defined
+ - Add a function that allows tweaking of noisy python modules that send information to the log.
+ - Add Manual documentation
+ - Add application Setup tab for other obscure toolset options; add setter and getter methods in GridUtils()
+   - Use numpypi: True/False
+   - Enable logging: True/False
+   - Specify logfile: "filename"
+   - Specify logging level
+   - Specify verbose level
+   - Specify debug level
+   - Log erase button
+ - Update some important references
+ - We can add param.watch to any control to trigger events when certain things happen.
+ - We also learned that a lot of python modules leverage the logging module and that some of
+   those modules are very verbose.  We setup a function to reduce some of that noise.
+ - Once a logger is created, it cannot be deleted.  It can be enabled and disabled.
+ - Add a small program example to show all available loggers after a GridUtils object is created.
+ - TODO: Creating more small program examples to demonstrate logging and debugging techniques.
+ - Use the setter functions in mkGridScripts and examples instead of setting the object variables directly.
+   - TODO: consider moving important variables to private/hidden variables.
+
 # 2021-04-08
 
  - Experimentation with panel.pane.HTML did not work pan out.  No great control over width and height.
    Text updates did not automatically resize the window.  The TextAreaInput automatically adds a
    scrollbar to the box when enough lines are added to the window.
- - Add application Setup tab for other obscure toolset options; add setter and getter methods in GridUtils()
-   - Use numpypi: True/False
-   - Enable logging: True/False
-   - Specify logfile: "filename"
-   - Specify verbose level
-   - Specify debug level
  - Fixed up documentation of Grid Representation in the app manual.
  - Panel markdown honors the usage of options after a link. 
    Ex: [MOM6 User Manual](https://mom6.readthedocs.io/){target="\_blank"}

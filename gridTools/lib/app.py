@@ -26,8 +26,9 @@ class App:
         # This application has its own copy of GridTools() object
         self.grd = grd
 
-        # Default grid filename
+        # Default filenames
         self.defaultGridFilename = 'gridFile.nc'
+        self.defaultLogFilename = 'logFile.log'
 
         # How we grow the grid from the specified latitude (lat0) or longitude (lon0)
         # TODO: If 'Center' is not chosen then the controls for Central Latitude and Central Longitude no longer make sense.
@@ -38,6 +39,21 @@ class App:
         # For now only MOM6 works.  It could work for other grids!
         #gridTypes = ["MOM6", "ROMS", "WRF"]
         self.gridTypes = ["MOM6"]
+
+        # Generic true/false indicators
+        self.trueFalseNames = ["False","True"]
+        self.trueFalseValues = [False, True]
+        self.trueFalseDict = dict(zip(self.trueFalseNames, self.trueFalseValues))
+
+        # Log levels
+        self.logLevelNames = ["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        self.logLevelValues = [0, 10, 20, 30, 40, 50]
+        self.logLevelDict = dict(zip(self.logLevelNames, self.logLevelValues))
+
+        # Debug levels
+        self.debugLevelNames = ["OFF", "MESSAGE", "RAISE", "BREAKPOINT"]
+        self.debugLevelValues = [0, 1, 2, 3]
+        self.debugLevelDict = dict(zip(self.debugLevelNames, self.debugLevelValues))
 
         # Available plot projections
         self.plotProjections = ["Nearside Perspective", "Mercator", "Lambert Conformal Conic", "North Polar Stereographic", "South Polar Stereographic"]
@@ -355,9 +371,50 @@ class App:
         point (1, 1) is stored in memory location (0, 0).
         ''', width=self.plotWidgetWidth)
 
+        pageLogging = pn.WidgetBox('''
+        # Logging
+        The logging mechanism in this application and GridUtils() is slightly complex.  For messages
+        emitted to the "Information" panel or using iterative means, you can control the amount of 
+        detail presented to you or logged in a file.  The logging levels from low to high are: NOTSET, 
+        DEBUG, INFO, WARNING, ERROR and CRITICAL.  The level set means only messages of that level or higher
+        will be shown or logged.  If you want to see all available detail, use NOTSET.  NOTE: The detail sent
+        to the "Information" window by default is INFO or higher.  The detail sent to a log file, if enabled,
+        is WARNING or higher.  The function for emitting messages is `GridUtils.printMsg()`.
+        # Log file
+        You can only change the log file name or delete the log file when the logging system is disabled.
+        To assist the software developers, we request that you provide a log file of activity to help us
+        discover problems with the code.  The log file will continue to grow over time.  It is a good idea
+        to periodically erase the log file.
+        # Debug level
+        This is a special feature mainly for developers.  If you are planning to "hack" this code, you can
+        utilize this feature to assist with debugging existing or new code.  The available debug levels
+        do not operate like the logging levels.  For operational use, the debug level is usually OFF.  You
+        can use the MESSAGE level to simply emit messsages for debugging.  The debug level RAISE, can emit a
+        message and then raise a python exception.  This can normally be done in a try/except block where you
+        can try a bit of code and in the except block raise the exception after emitting a debugging message.
+        The last level is BREAKPOINT.  This is similar to RAISE except that after the message is emitted, the
+        program will attempt to start the python debugger (pdb) using `pdb.set_trace()`.  All messages sent
+        via `GridUtils.debugMsg()` are shown at the DEBUG level.
+
+        **NOTE**: Setting breakpoints do not work very well in the application.  The application
+        is running a server.  When a breakpoint is triggered, it will crash the server running the application.
+        ''', width=self.plotWidgetWidth)
+
+        pageNumpyPi = pn.WidgetBox('''
+        # numpypi
+        Activating numpypi will replace some mathematical routines in numpy with slower
+        routines that will produce bitwise identical results.  For more information on
+        this package, please [consult this webpage](https://github.com/adcroft/numpypi){target="_blank"}.
+        NOTE: The numpypi module provides portable intrinsic functions that return the
+        same bitwise floating-point values on different platforms.  Not all numpy 
+        routines are replaced.
+        ''', width=self.plotWidgetWidth)
+
         manualTabs.extend([
             ('Main', pageMain),
-            ('Grids', pageGrids)
+            ('Grids', pageGrids),
+            ('Logging', pageLogging),
+            ('Numpypi', pageNumpyPi),
         ])
 
         return manualTabs
@@ -470,18 +527,67 @@ class App:
 
         # This presents a data view summary of the xarray object
         self.dataView = pn.Column(self.grd.grid, width=self.plotWidgetWidth)
+
+        # Setup controls
+        self.logEnableControl = pn.widgets.Checkbox(name="Enable file logging")
+        self.logEnableControl.param.watch(self.logEnableCallback, 'value')
+        #self.grd.debugMsg('breakpoint',3)
+        self.logFilenameControl = pn.widgets.TextInput(name='Log filename', value=self.defaultLogFilename, width=200)
+        self.logLevelControl = pn.widgets.Select(name='Log level', options=self.logLevelNames, value=self.logLevelNames[3])
+        self.logLevelControl.param.watch(self.logLevelCallback, 'value')
+        self.logEraseButton = pn.widgets.Button(name='Erase log file', button_type='danger', height=50, width=200)
+        self.logEraseButton.on_click(self.deleteLogfile)
+        self.informationLevelControl = pn.widgets.Select(name='Information level', options=self.logLevelNames, value=self.logLevelNames[2])
+        self.debugLevelControl = pn.widgets.Select(name='Debug level', options=self.debugLevelNames, value=self.debugLevelNames[0])
+        self.debugLevelControl.param.watch(self.debugLevelCallback, 'value')
+        self.enableNumpyPiControl = pn.widgets.Checkbox(name="Enable numpypi bitwise-the-same")
+
+    def deleteLogfile(self, event):
+        '''This function is called as a result of pushing the "Erase logfile" button in the application.
+        This places a call into GridTools.deleteLogfile(filename).'''
+        self.grd.deleteLogfile(self.logFilenameControl.value)
+        return
+
+    def logEnableCallback(self, event):
+        msg = "logEnableCallback event"
+        self.grd.printMsg(msg, logging.DEBUG)
+        if hasattr(event, 'name') and hasattr(event, 'old') and hasattr(event, 'new') and hasattr(event, 'type'):
+            if event.name == 'value' and event.type == 'changed':
+                if event.new == True:
+                    self.grd.enableLogging(self.logFilenameControl.value)
+                if event.new == False:
+                    self.grd.disableLogging()
+        else:
+            msg = "Illegal event passed to App.logEnableCallback()"
+            self.grd.printMsg(msg, logging.ERROR)
+
+        return
+
+    def logLevelCallback(self, event):
+        msg = "logLevelCallback event"
+        self.grd.printMsg(msg, logging.DEBUG)
+        if hasattr(event, 'name') and hasattr(event, 'old') and hasattr(event, 'new') and hasattr(event, 'type'):
+            if event.name == 'value' and event.type == 'changed':
+                self.grd.setLogLevel(self.logLevelDict[event.new])
+        
+    def debugLevelCallback(self, event):
+        msg = "debugLevelCallback event"
+        self.grd.printMsg(msg, logging.DEBUG)
+        if hasattr(event, 'name') and hasattr(event, 'old') and hasattr(event, 'new') and hasattr(event, 'type'):
+            if event.name == 'value' and event.type == 'changed':
+                self.grd.setDebugLevel(self.debugLevelDict[event.new])
         
     def initializeTabs(self):
         # Tabs
 
-        # Plot and Grid controls
+        # Plot, Grid and Setup controls
         self.controlTabs = pn.Tabs()
         self.plotControlTabs = pn.Tabs()
         self.gridControlTabs = pn.Tabs()
+        self.setupControlTabs = pn.Tabs()
 
         # If the Alt layout works, we can replace the existing.
         self.displayTabs = pn.Tabs()
-        self.displayTabsAlt = pn.Tabs()
         self.saveLoadTabs = pn.Tabs()
 
         # Pull controls together
@@ -506,6 +612,27 @@ class App:
             For now, MOM6 grids require grid mode 2.
             """, self.gridMode)
 
+        # Setup controls
+        self.loggingControls = pn.WidgetBox('# Logging','''
+        These controls allow you to limit the level of output put into the Information window.  Logging to
+        an external file is also available.  See the Manual tab called "Logging" for more information.
+        ''',
+                self.logFilenameControl,
+                self.logEnableControl,
+                self.logEraseButton,
+                self.logLevelControl,
+                self.informationLevelControl,
+                self.debugLevelControl
+        )
+
+        self.numpyPiControls = pn.WidgetBox('''
+        # numpypi
+        See Manual tab "Numpypi" for more information.
+
+        NOTE: This control does not do anything yet!
+        ''',
+                self.enableNumpyPiControl)
+
         # Place controls into respective tabs
 
         # Control hierarchy (left panel)
@@ -517,27 +644,28 @@ class App:
         #  Projection
         #  Spacing
         #  Advanced
+        # Setup
+        #  Logging
+
+        # Top level
+        self.controlTabs.extend([
+            ('Plot', self.plotControlTabs),
+            ('Grid', self.gridControlTabs),
+            ('Setup', self.setupControlTabs)
+        ])
+
+        # Plot
         self.plotControlTabs.extend([
             ('Projection', self.plotProjectionControls),
             ('Extent', self.plotExtentControls),
             ('Style', self.plotStyleControls)
         ])
 
+        # Grid
         self.gridControlTabs.extend([
             ('Projection', self.gridProjectionControls),
             ('Spacing', self.gridSpacingControls),
             ('Advanced', self.gridAdvancedControls)
-        ])
-
-        self.controlTabs.extend([
-            ('Plot', self.plotControlTabs),
-            ('Grid', self.gridControlTabs)
-        ])
-
-        self.displayTabs.extend([
-            ('Grid Plot', self.plotWindow),
-            ('Grid Info', self.dataView),
-            ('Manual', self.showManual)
         ])
 
         self.localFilesWindow = pn.WidgetBox(
@@ -566,12 +694,18 @@ class App:
         ])
 
         # Plotting area, data view, local/remote file access and manual
-        self.displayTabsAlt.extend([
+        self.displayTabs.extend([
             ('Grid Plot', self.plotWindow),
             ('Grid Info', self.dataView),
             ('Local Files', self.localFilesWindow),
             ('Remote Files', self.remoteFilesWindow),
             ('Manual', self.showManual())
+        ])
+
+        # Setup
+        self.setupControlTabs.extend([
+            ('Logging', self.loggingControls),
+            ('Numpypi', self.numpyPiControls)
         ])
         
     def initializeDashboard(self):
@@ -579,7 +713,7 @@ class App:
         # Pull all the final dashboard together in an application
         self.dashboard = pn.WidgetBox(
             pn.Column(pn.Row(self.clearLogButton, self.statusWidget), sizing_mode='stretch_width', width_policy='max'),
-            pn.Row(self.controlTabs, self.displayTabsAlt)
+            pn.Row(self.controlTabs, self.displayTabs)
         )
         
         # Attach application to GridUtils for integration into panel, etc
