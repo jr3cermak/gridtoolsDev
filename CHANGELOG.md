@@ -1,5 +1,14 @@
 # Change Log
 
+# 2021-04-10
+
+ - Shore up messaging and debugging code in GridUtils().  A lot of missing level= in 2nd arguments
+   calls to printMsg and debugMsg.
+ - Add a TODO to refactor messaging and debugging into its own package/module.
+ - Add an example on how to work with logging levels and debug levels.
+ - Add showPlotParameters function.
+ - Add more explanation to example1.
+
 # 2021-04-09
 
  - Fix warning in GridUtils.plotGrid()
