@@ -14,6 +14,10 @@ These are people, references and bookmarks that provided useful information to m
  * Lambert Conformal Conic grid generation provided by:
    https://github.com/nikizadehgfdl/grid_generation/blob/dev/jupynotebooks/regional_grid_spherical.ipynb
 
+##
+ * NSIDC Map Transformations Library (Mapx)
+   https://nsidc.org/support/42415620-Mapx-Map-Transformations-Library
+
 ## Bookmarks
  * https://www.python.org/dev/peps/pep-0008/#package-and-module-names
  * https://scitools.org.uk/cartopy/docs/latest/index.html
@@ -31,3 +35,4 @@ These are people, references and bookmarks that provided useful information to m
  * https://stackoverflow.com/questions/32234156/how-to-unimport-a-python-module-which-is-already-imported
  * https://softwareengineering.stackexchange.com/questions/329348/classes-vs-modules-in-python
  * https://stackoverflow.com/questions/3277367/how-does-pythons-super-work-with-multiple-inheritance
+ * https://realpython.com/python-bindings-overview/

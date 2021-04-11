@@ -1077,7 +1077,6 @@ class GridUtils:
                     if pkey in self.gridInfo['plotParameters'][subKey].keys():
                         return self.gridInfo['plotParameters'][subKey][pkey]
                 except:
-                    #warnings.warn("Attempt to use a subkey(%s) which is not really a subkey? or maybe it should be?" % (subKey))
                     msg = "Attempt to use a subkey(%s) which is not really a subkey? or maybe it should be?" % (subKey)
                     self.printMsg(msg, level=logging.WARNING)
             return default

@@ -80,7 +80,7 @@ class App:
         self.plotLineStyles = ['solid', 'dotted', 'dashed', 'dashdot']
         self.plotLineStylesDescriptions = ['Solid', 'Dotted', 'Dashed', 'DashDot']
         self.plotLineStyleDict = dict(zip(self.plotLineStylesDescriptions, self.plotLineStyles))
-        
+
         # This controls the default figure size of the plot in the panel application
         # TODO: Improve integration
         # aspect 4:3, default dpi=144
