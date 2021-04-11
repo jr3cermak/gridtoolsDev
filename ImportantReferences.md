@@ -29,3 +29,5 @@ These are people, references and bookmarks that provided useful information to m
  * https://www.kite.com/python/answers/how-to-hide-a-figure-from-being-shown-in-matplotlib-in-python
  * https://stackoverflow.com/questions/51357691/python-logging-only-for-own-imported-modules
  * https://stackoverflow.com/questions/32234156/how-to-unimport-a-python-module-which-is-already-imported
+ * https://softwareengineering.stackexchange.com/questions/329348/classes-vs-modules-in-python
+ * https://stackoverflow.com/questions/3277367/how-does-pythons-super-work-with-multiple-inheritance

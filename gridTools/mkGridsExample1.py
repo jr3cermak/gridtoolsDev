@@ -24,8 +24,11 @@ from gridutils import GridUtils
 
 # Initialize a grid object
 grd = GridUtils()
+grd.printMsg("At this point, we have initialized a GridUtils() object.")
+grd.printMsg("")
 
 # We can turn on extra output from the module
+grd.printMsg("We set print and logging messages to the DEBUG level.")
 logFilename = 'configs/test/nikiTest.log'
 grd.setVerboseLevel(logging.DEBUG)
 grd.setDebugLevel(0)
@@ -38,6 +41,7 @@ grd.clearGrid()
 
 # Specify the grid parameters
 # gridMode should be 2.0 for supergrid
+grd.printMsg("Initial grid parameters are set:")
 grd.setGridParameters({
     'projection': {
         'name': 'LambertConformalConic',
@@ -52,6 +56,8 @@ grd.setGridParameters({
     'gridResolution': 1.0,
     'gridMode': 2.0
 })
+grd.showGridParameters()
+grd.printMsg("")
 
 # To set or update dictionary items in 'projection', you can use the dictionary format above with a direct assigment
 # or use the subKey parameter as in below.
@@ -62,20 +68,31 @@ grd.setGridParameters({
 #}, subKey='projection')
 
 # This forms a grid in memory using the specified grid parameters
+grd.printMsg("We make a grid with the grid parameters.")
 grd.makeGrid()
 
 # Save the new grid to a netCDF file
+grd.printMsg("We attempt to save the grid to a netCDF file.")
 grd.saveGrid(filename="configs/test/nikiTest.nc")
 
 # This prints out all the current grid parameters
 # Note: for Lambert Conformal Conic grids, two additional projection parameters are computed.
 #       First and second parallel for the grid (lat_1 and lat_2)
+grd.printMsg("""
+This shows the current grid parameters.  Note that for Lambert Conformal Grids, lat_1 and
+lat_2 have been computed and added to the grid parameters.
+
+""")
 grd.showGridParameters()
+grd.printMsg("")
 
 # You can show the data summary from xarray for the grid
-grd.grid
+grd.printMsg("This shows the xarray structure for the recently created grid:")
+grd.printMsg("%s" % (grd.grid))
+grd.printMsg("")
 
 # Define plot parameters so we can see what the grid looks like
+grd.printMsg("We now setup plotting parameters for showing the grid on a map:")
 grd.setPlotParameters(
     {
         'figsize': (8,8),
@@ -93,6 +110,8 @@ grd.setPlotParameters(
         'jColor': 'k'
     }
 )
+grd.showPlotParameters()
+grd.printMsg("")
 
 # Projection may be specified separately
 grd.setPlotParameters(
@@ -109,10 +128,17 @@ grd.setPlotParameters(
 # Axes object - you can further fine tune plot parameters,
 #   titles, axis, etc prior to the final plotting of the figure.
 #   Some items may be configured via the figure object.
+grd.printMsg('''
+We place a call to actually plot the grid using plotGrid().  This function returns
+a figure and axes object that can be further modified before displaying or saving
+the plot.
+
+''')
 (figure, axes) = grd.plotGrid()
 
 # You can save the figure using the savefig() method on the
 # figure object.  Many formats are possible.
+grd.printMsg("We save the figure in two different formats: jpg and pdf.")
 figure.savefig('configs/test/nikiTest.jpg', dpi=None, facecolor='w', edgecolor='w',
         orientation='portrait', transparent=False, bbox_inches=None, pad_inches=0.1)
 

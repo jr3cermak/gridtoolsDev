@@ -37,15 +37,16 @@ A milestone for version 1.0 has yet to be established.
 
  - [X] Further consolidate matplotlib plotting code
    - [X] Refactor plotting code.  It is mostly the same except for setting the projection.
- - [ ] Add "Refresh Plot" buttons to other Plot tabs
+ - [ ] Add "Refresh Plot" buttons to other Plot tabs or figure out how to squeeze a single plot button into the layout
  - [ ] Do we have to declare everything in __init__ first or can be push all that to respective reset/clear functions?
+ - [ ] refactor messaging/logging out of GridUtils into its own package so we can import printMsg/debugMsg as standalone calls
  - [ ] refactor refineS and refineR options as Niki had them defined; allow working in meters too
  - [ ] makeGrid assumes degrees at this point.
  - [X] Pass back an error graphic instead of None for figures that do not render
  - [ ] Add a formal logging/message mechanism.
    - [X] Allow display of important messages and warnings in panel application: widget=TextAreaInput
-   - [ ] Create options in application and other tools for user configuration of logging and output.
-   - [ ] Create a message buffer/system for information.
+   - [X] Create options in application and other tools for user configuration of logging and output.
+   - [X] Create a message buffer/system for information.
    - [ ] Create a separate app to watch a log file? https://discourse.holoviz.org/t/scrollable-log-text-viewer/317
  - [ ] For now, the gridParameters are always in reference to a center point in a grid
    in the future, one may fix a side or point of the grid and grow out from that point
