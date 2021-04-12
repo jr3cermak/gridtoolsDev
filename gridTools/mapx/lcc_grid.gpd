@@ -1,0 +1,13 @@
+# file: lcc_grid.gpd
+#
+Map Projection:                 Lambert Conic Conformal Ellipsoid
+Map Equatorial Radius:          6378206.4
+Map Eccentricity:               0.0822719
+Map Reference Longitude:        -130.0
+Map Reference Latitude:         40.0
+Grid Width:                     3
+Grid Height:                    3
+Grid Map Units per Row:        55588.736676
+Grid Map Units per Column:     55587.700000
+Grid Map Origin Column:         1.0
+Grid Map Origin Row:            1.0

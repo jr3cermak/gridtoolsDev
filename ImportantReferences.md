@@ -36,3 +36,4 @@ These are people, references and bookmarks that provided useful information to m
  * https://softwareengineering.stackexchange.com/questions/329348/classes-vs-modules-in-python
  * https://stackoverflow.com/questions/3277367/how-does-pythons-super-work-with-multiple-inheritance
  * https://realpython.com/python-bindings-overview/
+ * https://stackoverflow.com/questions/12575421/convert-a-1d-array-to-a-2d-array-in-numpy

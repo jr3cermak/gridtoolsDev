@@ -8,6 +8,12 @@
  - Add an example on how to work with logging levels and debug levels.
  - Add showPlotParameters function.
  - Add more explanation to example1.
+ - Testing NSIDC's grid generation software: mapx
+   - https://github.com/nsidc/mapx
+ - Learn how to read binary and reshape a numpy array after reading a mapx binary grid file
+ - FIX: GridUtils: Reformat lon > 180 
+ - lcc_grid.gpd almost replicates Niki's example grid; degress vs meters
+ - Create a 3rd example that generates a 1x1 grid for testing
 
 # 2021-04-09
 

@@ -41,8 +41,7 @@ grd.clearGrid()
 
 # Specify the grid parameters
 # gridMode should be 2.0 for supergrid
-# Normally 30.0; 0.0 for debugging
-gtilt = 30.0
+gtilt = 0.0
 grd.printMsg("Initial grid parameters are set:")
 grd.setGridParameters({
     'projection': {
@@ -50,9 +49,9 @@ grd.setGridParameters({
         'lon_0': 230.0,
         'lat_0': 40.0
     },
-    'dx': 20.0,
+    'dx': 1.0,
     'dxUnits': 'degrees',
-    'dy': 30.0,
+    'dy': 1.0,
     'dyUnits': 'degrees',
     'tilt': gtilt,
     'gridResolution': 1.0,
@@ -75,7 +74,7 @@ grd.makeGrid()
 
 # Save the new grid to a netCDF file
 grd.printMsg("We attempt to save the grid to a netCDF file.")
-grd.saveGrid(filename="configs/test/nikiTest.nc")
+grd.saveGrid(filename="configs/test/gridTest.nc")
 
 # This prints out all the current grid parameters
 # Note: for Lambert Conformal Conic grids, two additional projection parameters are computed.
@@ -107,7 +106,7 @@ grd.setPlotParameters(
         'iLinewidth': 1.0,
         'jLinewidth': 1.0,
         'showGridCells': True,
-        'title': "Nearside Perspective: 20x30 with %.1f degree tilt" % (gtilt),
+        'title': "Nearside Perspective: 1x1 with %.1f degree tilt" % (gtilt),
         'iColor': 'k',
         'jColor': 'k'
     }
@@ -141,9 +140,9 @@ the plot.
 # You can save the figure using the savefig() method on the
 # figure object.  Many formats are possible.
 grd.printMsg("We save the figure in two different formats: jpg and pdf.")
-figure.savefig('configs/test/nikiTest.jpg', dpi=None, facecolor='w', edgecolor='w',
+figure.savefig('configs/test/gridTest.jpg', dpi=None, facecolor='w', edgecolor='w',
         orientation='portrait', transparent=False, bbox_inches=None, pad_inches=0.1)
 
-figure.savefig('configs/test/nikiTest.pdf', dpi=None, facecolor='w', edgecolor='w',
+figure.savefig('configs/test/gridTest.pdf', dpi=None, facecolor='w', edgecolor='w',
         orientation='portrait', transparent=False, bbox_inches=None, pad_inches=0.1)
 

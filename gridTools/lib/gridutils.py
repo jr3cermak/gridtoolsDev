@@ -423,6 +423,8 @@ class GridUtils:
                 tilt,
                 self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
             )
+            # Adjust lonGrid to -180 to +180
+            lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
 
             (nxp, nyp) = lonGrid.shape
 
@@ -462,6 +464,8 @@ class GridUtils:
                 tilt,
                 self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
             )
+            # Adjust lonGrid to -180 to +180
+            lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
 
             (nxp, nyp) = lonGrid.shape
 
@@ -502,6 +506,8 @@ class GridUtils:
                 tilt,
                 self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
             )
+            # Adjust lonGrid to -180 to +180
+            lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
 
             (nxp, nyp) = lonGrid.shape
 
@@ -543,6 +549,8 @@ class GridUtils:
                 tilt,
                 self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
             )
+            # Adjust lonGrid to -180 to +180
+            lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
 
             (nxp, nyp) = lonGrid.shape
 
