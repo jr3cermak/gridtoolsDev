@@ -7,12 +7,14 @@ A milestone for version 1.0 has yet to be established.
  - [ ] grid creation/editor
    - [ ] grid metrics
      - [X] Spherical solution is complete via Niki's ROMS to MOM6 converter
-     - [ ] Mercator (angle_dx might be 0 as it is lined up along latitude lines; except for tilt?)
+     - [X] Mercator (angle_dx might be 0 as it is lined up along latitude lines; except for tilt?)
      - [ ] Polar (might be the same as spherical?)
    - [ ] make Lambert Conformal Conic Grids; needs testing
      - [ ] LCC cannot take custom lat_1 and lat_2; it generates lat_1 and lat_2 based on grid inputs
      - [X] Update new lat_1 and lat_2 for application after makeGrid() is run
      - [ ] changing plot parameters lat_1 and lat_2 do not seem to impact the view
+   - [ ] make Mercator grids; needs testing
+   -   [ ] issue a warning if tilt is non-zero
    - [ ] grid generation in other projections
    - [ ] on saveGrid() convert lon [+0,+360] to [-180,+180]
    - [ ] Unify ellipse radius (R) constants throughout code
@@ -37,6 +39,10 @@ A milestone for version 1.0 has yet to be established.
 
  - [X] Further consolidate matplotlib plotting code
    - [X] Refactor plotting code.  It is mostly the same except for setting the projection.
+ - [ ] Plotting
+   - [X] Grid
+   - [X] Gridboxes
+   - [ ] Supergrid
  - [ ] Add "Refresh Plot" buttons to other Plot tabs or figure out how to squeeze a single plot button into the layout
  - [ ] Do we have to declare everything in __init__ first or can be push all that to respective reset/clear functions?
  - [ ] refactor messaging/logging out of GridUtils into its own package so we can import printMsg/debugMsg as standalone calls

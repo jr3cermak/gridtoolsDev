@@ -22,6 +22,7 @@ These are people, references and bookmarks that provided useful information to m
  * https://www.python.org/dev/peps/pep-0008/#package-and-module-names
  * https://scitools.org.uk/cartopy/docs/latest/index.html
  * https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
+ * https://stackoverflow.com/questions/44412432/cartopy-zoom-in-to-a-region
  * https://panel.holoviz.org/gallery/index.html
  * https://towardsdatascience.com/plt-subplot-or-plt-subplots-understanding-state-based-vs-object-oriented-programming-in-pyplot-4ba0c7283f5d
  * https://unidata.github.io/MetPy/latest/examples/Four_Panel_Map.html
@@ -37,3 +38,6 @@ These are people, references and bookmarks that provided useful information to m
  * https://stackoverflow.com/questions/3277367/how-does-pythons-super-work-with-multiple-inheritance
  * https://realpython.com/python-bindings-overview/
  * https://stackoverflow.com/questions/12575421/convert-a-1d-array-to-a-2d-array-in-numpy
+ * https://matplotlib.org/stable/tutorials/colors/colorbar_only.html#sphx-glr-tutorials-colors-colorbar-only-py
+ * https://matplotlib.org/stable/tutorials/colors/colormaps.html
+ * https://rabernat.github.io/research_computing/xarray.html

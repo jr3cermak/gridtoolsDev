@@ -80,10 +80,12 @@ Having true scale latitude unset for plotting seems to work.
 ## NEP7
 
 This grid is Lambert Conformal Conic.
+Grid resolution is 10km (10000 meters)
 The LCC attributes are:
-    Standard parallel latitudes: 40.0 and 60.0 North
-    Central longitude: 91.0 West
+    Standard parallel latitudes: 40.0 and 60.0 North (lat_1, lat_2)
+    Central longitude: -91.0 West (lon_0)
     Central latitude: unknown (seems ok for plotting)
+    Corner points: (-130,0N) (-220,70N)
 
 # Other grids
 

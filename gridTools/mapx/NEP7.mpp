@@ -1,0 +1,14 @@
+# file: NEP7.mpp
+#
+Map Projection:                 Lambert Conic Conformal Ellipsoid
+Map Equatorial Radius:          6378206.4
+Map Eccentricity:               0.0822719
+Map Reference Longitude:        -91.0
+Map Reference Latitude:         40.0
+Map Second Reference Latitude:  60.0
+#Grid Width:                     685
+#Grid Height:                    1633
+Grid Map Units per Row:         10000.000000
+Grid Map Units per Column:      10000.000000
+Grid Map Origin Column:         1.0
+Grid Map Origin Row:            1.0

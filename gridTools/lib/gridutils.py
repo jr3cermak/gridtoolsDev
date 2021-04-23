@@ -403,9 +403,6 @@ class GridUtils:
 
         return
    
-
-
-
     def makeGrid(self):
         '''Using supplied grid parameters, populate a grid in memory.'''
 
@@ -416,13 +413,21 @@ class GridUtils:
             else:
                 tilt = 0.0
 
-            lonGrid, latGrid = self.generate_regional_spherical(
+            #lonGrid, latGrid = self.generate_regional_spherical(
+            #    self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
+            #    self.gridInfo['gridParameters']['projection']['lat_0'],
+            #    self.gridInfo['gridParameters']['dy'],
+            #    tilt,
+            #    self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
+            #)
+            lonGrid, latGrid = self.generate_regional_mercator(
                 self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
-                0, # lat0 is 0 in mercator projection?
+                self.gridInfo['gridParameters']['projection']['lat_0'],
                 self.gridInfo['gridParameters']['dy'],
                 tilt,
-                self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']
+                self.gridInfo['gridParameters']['gridResolution'] * self.gridInfo['gridParameters']['gridMode']                
             )
+              
             # Adjust lonGrid to -180 to +180
             lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
 
@@ -675,7 +680,7 @@ class GridUtils:
         lamp      = np.where(lamp<0,lamp+360,lamp)
         return lamp,phip
     
-    def rotate_y_mesh(self,lam,phi,theta):
+    def rotate_y_mesh(self, lam, phi, theta):
         """Rotate the whole mesh on globe by angle theta around y axis (passing through equator and prime meridian+90.)."""
         """Returns the rotated mesh."""
         #Bring the angle to be in [-pi,pi] so that atan2 would work
@@ -719,17 +724,28 @@ class GridUtils:
         Ni = int(lon_span*refine)
         Nj = int(lat_span*refine)
        
-        #Generate a mesh at equator centered at (lon0, 0)
-        lam_,phi_ = self.generate_latlon_mesh_centered(Ni,Nj,lon0,lon_span,0.0,lat_span)
-        lam_,phi_ = self.rotate_z_mesh(lam_,phi_, (90.-lon0)*self.PI_180)  #rotate around z to bring it centered at y axis
-        lam_,phi_ = self.rotate_y_mesh(lam_,phi_,tilt*self.PI_180)         #rotate around y axis to tilt it as desired
-        lam_,phi_ = self.rotate_x_mesh(lam_,phi_,lat0*self.PI_180)         #rotate around x to bring it centered at (lon0,lat0)
-        lam_,phi_ = self.rotate_z_mesh(lam_,phi_,-(90.-lon0)*self.PI_180)  #rotate around z to bring it back
+        # Generate a mesh at equator centered at (lon0, 0)
+        lam_,phi_ = self.generate_latlon_mesh_centered(Ni, Nj, lon0, lon_span, 0.0, lat_span)
+        lam_,phi_ = self.rotate_z_mesh(lam_,phi_, (90.-lon0)*self.PI_180)   #rotate around z to bring it centered at y axis
+        lam_,phi_ = self.rotate_y_mesh(lam_,phi_, tilt*self.PI_180)         #rotate around y axis to tilt it as desired
+        lam_,phi_ = self.rotate_x_mesh(lam_,phi_, lat0*self.PI_180)         #rotate around x to bring it centered at (lon0,lat0)
+        lam_,phi_ = self.rotate_z_mesh(lam_,phi_, -(90.-lon0)*self.PI_180)  #rotate around z to bring it back
                 
         return lam_,phi_
 
     # Grid generation functions
-    
+
+    def generate_regional_mercator(self, lon0, lon_span, lat0, lat_span, tilt, refine):
+        """Generate a regional grid centered at (lon0, lat0) with spans of (lon_span, lat_span) and tilted by angle tilt"""
+        Ni = int(lon_span*refine)
+        Nj = int(lat_span*refine)
+       
+        # Generate a mesh centered at (lon0, lat0)
+        lam_,phi_ = self.generate_latlon_mesh_centered(Ni, Nj, lon0, lon_span, lat0, lat_span)
+        lam_,phi_ = self.rotate_x_mesh(lam_, phi_, tilt*self.PI_180)         #rotate around x axis to tilt it as desired
+                
+        return lam_,phi_
+
     # xarray Dataset operations
     
     def closeDataset(self):
