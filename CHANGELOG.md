@@ -1,5 +1,35 @@
 # Change Log
 
+# 2021-04-26
+
+ - Avoid use of xesmf 0.5.2
+   - split xesmfTools environment and move xgcm into its own environment
+ - Add xgcmTools environment
+ - Remapping an ice field using xesmf regridder
+ - Begin rework field flood algorythm that pyroms utilizes
+ - Added more bookmarks and sorted them
+ - Added xesmf to pangeo environment
+ - app.py; gridtools.py updates
+   - Add appropriate spacing between items
+   - If tilt is zero, remove it from any message or title
+   - Split refine into two arguments
+   - Update message if regular lat lon grid is being built on the equator or not
+ - Move plotBathyArctic6.py into pyroms directory
+
+# 2021-04-22
+
+ - The supergrid plotting would fail if grid type was two(2) and resolution was 0.5.  When
+   multiplied together, it results in 1.0 which confused the current system.
+ - Add simple mercator grid generation method
+ - Add a couple of bathy examples to debug a masking issue.  We can use xarray to display a
+   GEBCO 2020 figure and a ROMS figure with bathymetry.
+ - Add xmap examples that almost work
+ - Fix some spacing in some gridutils functions
+ - Update metadata for NEP7 grid in README
+ - Disable mercator tilt
+ - Separate refine inputs to grid functions that use gridResolution and gridMode
+ - Update some messaging
+
 # 2021-04-10
 
  - Shore up messaging and debugging code in GridUtils().  A lot of missing level= in 2nd arguments

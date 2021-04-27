@@ -1,3 +1,5 @@
+# This is the old pyroms style of plotting bathymetry
+
 import netCDF4
 import subprocess
 import pyroms

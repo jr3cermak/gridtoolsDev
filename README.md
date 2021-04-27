@@ -6,7 +6,7 @@ One could hope it can be kept generic enough to support any model.  The focus
 is on supporting the MOM6 ocean model.
 
 Required items:
- * Spherical.py 
+ * spherical.py
  * gridutils.py
  * app.py
 
@@ -17,13 +17,13 @@ Various tools are available to manipulation of new and existing grids in
 an iterative or interactive form.
 
 Jupyterlab notebooks:
- * mkMapIterative.ipynb
- * mkMapInteractive.ipynb
+ * mkGridIterative.ipynb
+ * mkGridInteractive.ipynb
 
 # Application
 
-The grid generation application, mkMapInteractive.ipynb, can be run on a cloud hosting system.
-The application has been adapted to work on mybinder.org.
+The grid generation application, mkGridInteractive.ipynb, can be run on a cloud hosting system.  The application has been adapted to work on mybinder.org.
+NOTICE: The mybinder application can take upwards to 30 minutes to build.
 
 Use the following options:
  * GitHub=https://github.com/jr3cermak/gridtools
@@ -49,7 +49,8 @@ Authors: Mehmet Ilicak; Alistair Adcroft [REPO](https://github.com/ESMG/pyroms)
 
 # Workarounds
 
-These are the current workarounds that are required for the grid toolset package.
+These are the current workarounds that are required for the grid toolset
+package.
 
 ## datashader
 
@@ -118,7 +119,7 @@ quicker recovery of a generic environment.
 
 Initialization:
 ```
-$ conda env create conda/pyroms.yml
+$ conda env create -f conda/pyroms.yml
 $ conda env export > conda/pyroms_export.yml
 ```
 

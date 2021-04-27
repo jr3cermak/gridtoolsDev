@@ -41,7 +41,7 @@ class App:
         self.gridTypes = ["MOM6"]
 
         # Generic true/false indicators
-        self.trueFalseNames = ["False","True"]
+        self.trueFalseNames = ["False", "True"]
         self.trueFalseValues = [False, True]
         self.trueFalseDict = dict(zip(self.trueFalseNames, self.trueFalseValues))
 
@@ -177,7 +177,7 @@ class App:
         self.grd.saveGrid(filename=self.gridFilenameRemote.value)
 
     def make_grid(self, event):
-        updateMessage = "Nothing happened."
+        updateMessage = "No errors or warnings."
         msg = "Running make_grid()"
         self.grd.printMsg(msg, logging.INFO)
         self.grd.clearGrid()
@@ -223,7 +223,10 @@ class App:
             mp_title = plotTitle.value
         else:
             selectedProjection = self.plotProjection.value
-            mp_title = "%s: " % (selectedProjection) + str(self.dx.value) + "x" + str(self.dy.value) + " with " + str(self.gtilt.value) + " degree tilt"
+            if self.gtilt.value < 0.0 or self.gtilt.value > 0.0:
+                mp_title = "%s: " % (selectedProjection) + str(self.dx.value) + "x" + str(self.dy.value) + " with " + str(self.gtilt.value) + " degree tilt"
+            else:
+                mp_title = "%s: " % (selectedProjection) + str(self.dx.value) + "x" + str(self.dy.value)
 
         # Check plotGridMode.value to set plot parameter showGridCells
         showGridCellsState = False
@@ -437,7 +440,7 @@ class App:
         self.gridResolution = pn.widgets.Spinner(name="Grid Resolution", value=1.0, step=0.1, start=0.0, end=10.0, width=80)
         self.gridMode = pn.widgets.Spinner(name="Grid Mode", value=2, step=1, start=1, end=2, width=80)
         self.gridMode.disabled = True
-        self.unitNames = ['degrees','meters']
+        self.unitNames = ['degrees', 'meters']
         self.dxdyUnits = pn.widgets.Select(name='Units', options=self.unitNames, value=self.unitNames[0])
         self.dx = pn.widgets.Spinner(name="dx", value=20, step=1, start=0, end=100, width=100)
         self.dy = pn.widgets.Spinner(name="dy", value=30, step=1, start=0, end=100, width=100)

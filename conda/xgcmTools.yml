@@ -1,6 +1,4 @@
-name: xesmfTools
-# This follows the pattern on https://github.com/holoviz/geoviews
-# Avoid xesmf version 0.5.2
+name: xgcmTools
 # Requires post installation:
 # -c pyviz -c conda-forge netcdf4 geoviews jupyterlab matplotlib
 # -c pyviz -c nbserverproxy
@@ -12,8 +10,6 @@ channels:
   - pyviz
   - conda-forge
 dependencies:
-  - xesmf
-  - esmf
-  - esmpy
+  - xgcm
   - conda
   - pip
