@@ -18,14 +18,14 @@ quicker recovery of a generic environment.
 
 Initialization:
 ```
-$ conda env create -f conda/pyroms.yml
-$ conda env export > conda/pyroms_export.yml
+$ conda env create -f conda/xesmfTools.yml
+$ conda env export > conda/xesmfTools_export.yml
 ```
 
 For a quicker recovery of a conda environment, use the exported YAML file:
 ```
-$ conda env remove --name pyroms
-$ conda env create conda/pyroms_export.yaml
+$ conda env remove --name xesmfTools
+$ conda env create conda/xesmfTools_export.yaml
 ```
 
 NOTE: Initialization of holoviz from the generic YAML file took over an hour.
@@ -55,8 +55,13 @@ This is the main enviroment for utilizing the grid generation libraries.
 
 Some of the main libraries within this environment:
  * cartopy
+ * esmf
+ * esmpy
  * xarray
  * xesmf
+
+NOTE: Avoid version 0.5.2 of xesmf.  If you need to use the xgcm library,
+      install it as a separate environment.
 
 # Environments
 
@@ -66,13 +71,31 @@ Current operational environment for the grid toolset: ***xesmfTools***
 
 Initialization times:
  * bokeh: 9m 17s
- * gridTools: 11m 47s
- * legacyTools: 4m 53s
+ * gridTools: 11m 47s(!)
+ * legacyTools: 4m 53s(!)
  * pangeo: 10m 41s
  * pyroms: 1m 43s
  * xesmfTools: 5m 5s(!)
 
-(!) Requires post installation step to solve environment
+(!) Requires post installation steps, see below.
+
+This list of environments may change over time.  Other environments
+are used for experimentation and development purposes in another 
+development [repository](https://github.com/jr3cermak/gridtools).
+
+## xesmfTools
+
+Please read the YAML configuration file,
+[xesmfTools.yml](../../conda/xesmfTools.yml),
+for additional steps to create a complete environment.
+
+If you use the export file, you only need to install datashader.  If you use
+the xesmfTools.yml, you will need to install additional libraries in conda
+and install datashader.  
+
+Attempting to load all the libraries together initially takes conda a very
+long time to resolve package conflicts or it fails completely.  Partitioning
+the install process speeds up the process and is more successful.
 
 ## gridTools
 

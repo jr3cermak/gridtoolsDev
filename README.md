@@ -174,3 +174,8 @@ to upkeep of a manual index.
     * [ROMS](docs/grids/ROMS.md): ROMS grids
   * [resources](docs/resources)
     * [Bathymetry](docs/resources/Bathymetry)
+
+# Development
+
+This project is soliciting help in development.  Please contribute ideas or bug requests using the issues tab.
+Code contributions can be sent via github's pull request process.
