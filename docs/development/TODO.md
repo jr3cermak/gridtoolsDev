@@ -1,6 +1,23 @@
 # Planned work
 
-A milestone for version 1.0 has yet to be established.
+## Milestones
+
+ - [ ] Version 0.1
+   - [ ] Clean up documentation
+   - [ ] Generify examples
+   - [ ] Test application and examples for LCC grid generation
+   - [ ] Test application for examples regular Mercator grid generation
+   - [ ] Tackle critical TODO items
+   - [ ] Publish initial commit to ESMG
+   - [ ] Ensure mybinder.org works with the github commit
+ - [ ] Version 1.0
+   - [ ] Polar grid generation
+   - [ ] Allow import of ROMS grid for conversion to MOM6
+ - [ ] Verison 1.1
+   - [ ] Bathymetry and boundery condition support
+   - [ ] Grid filling options (flooding)
+ - [ ] Version 2.0
+   - [ ] Grid mask editor
 
 # TASKS
 
@@ -34,6 +51,8 @@ A milestone for version 1.0 has yet to be established.
    - [ ] calculate tilt (may not be possible)
    - [ ] update any tool metadata that is appropriate for that grid
  - [X] Create an application method within the GridUtils() class; GridTools().app()
+ - [ ] Using xesmf regridder and other tools to create bathymetry and other forcing and boundary files
+ - [ ] Develop a field "flood" routine similar to pyroms
 
 # TODO
 
@@ -46,8 +65,9 @@ A milestone for version 1.0 has yet to be established.
  - [ ] Add "Refresh Plot" buttons to other Plot tabs or figure out how to squeeze a single plot button into the layout
  - [ ] Do we have to declare everything in __init__ first or can be push all that to respective reset/clear functions?
  - [ ] refactor messaging/logging out of GridUtils into its own package so we can import printMsg/debugMsg as standalone calls
- - [ ] refactor refineS and refineR options as Niki had them defined; allow working in meters too
- - [ ] makeGrid assumes degrees at this point.
+ - [ ] refactor refineS and refineR options as Niki had them defined
+ - [ ] makeGrid assumes working in degrees
+ - [ ] Allow library to work in degree or meters
  - [X] Pass back an error graphic instead of None for figures that do not render
  - [ ] Add a formal logging/message mechanism.
    - [X] Allow display of important messages and warnings in panel application: widget=TextAreaInput

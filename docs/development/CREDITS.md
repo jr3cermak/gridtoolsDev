@@ -5,15 +5,15 @@
 Main authors for integration of various sources of
 software are:
 
- * [James Simkins](https://github.com/jsimkins2)
  * [Rob Cermak](https://github.com/jr3cermak)
+ * [James Simkins](https://github.com/jsimkins2)
 
 ## Code contributions
 
- * [Niki Zadeh](https://github.com/nikizadehgfdl)
- * [Liz Drenkard](https://github.com/amoebaliz)
- * [Mehmet Ilicak](https://github.com/milicak)
  * [Alistair Adcroft](https://github.com/adcroft)
- * [Matthew Harrison](https://github.com/MJHarrison-GFDL)
+ * [Liz Drenkard](https://github.com/amoebaliz)
  * [Raphael Dussin](https://github.com/raphaeldussin)
+ * [Matthew Harrison](https://github.com/MJHarrison-GFDL)
  * [Kate Hedstrom](https://github.com/kshedstrom)
+ * [Mehmet Ilicak](https://github.com/milicak)
+ * [Niki Zadeh](https://github.com/nikizadehgfdl)
