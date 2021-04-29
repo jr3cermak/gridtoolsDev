@@ -3,6 +3,7 @@
 ## Milestones
 
  - [ ] Version 0.1
+   - [ ] Simple polar grid generation
    - [ ] Clean up documentation
    - [ ] Generify examples
    - [ ] Test application and examples for LCC grid generation
@@ -10,17 +11,19 @@
    - [ ] Tackle critical TODO items
    - [ ] Publish initial commit to ESMG
    - [ ] Ensure mybinder.org works with the github commit
- - [ ] Version 1.0
-   - [ ] Polar grid generation
+ - [ ] Version 0.2
    - [ ] Allow import of ROMS grid for conversion to MOM6
- - [ ] Verison 1.1
+ - [ ] Verison 0.3
    - [ ] Bathymetry and boundery condition support
    - [ ] Grid filling options (flooding)
- - [ ] Version 2.0
+ - [ ] Version 0.5
    - [ ] Grid mask editor
 
 # TASKS
 
+ - [ ] general documentation
+   - [ ] grid parameters
+   - [ ] plot parameters
  - [ ] grid creation/editor
    - [ ] grid metrics
      - [X] Spherical solution is complete via Niki's ROMS to MOM6 converter
@@ -35,7 +38,8 @@
    - [ ] grid generation in other projections
    - [ ] on saveGrid() convert lon [+0,+360] to [-180,+180]
    - [ ] Unify ellipse radius (R) constants throughout code
-     - [ ] Allow user control?
+     - [X] Gridutils initializes with proj WGS84
+     - [ ] Allow user control
  - [ ] grid mask editor (land, etc)
  - [ ] integration of bathymetric sources and apply to grids
        Niki: https://github.com/nikizadehgfdl/ocean_model_topog_generator
@@ -43,7 +47,8 @@
  - [ ] Add option to use Alistair's numpypi package as a configurable option in toolsets
  - [ ] turn numpypi into a loadable package via pip
  - [X] add datashader and numpypi from github sources; see postBuild script
-   - [ ] document this need and steps for iterative methods
+   - [ ] implement and document in application
+   - [ ] implement and document for programming use
  - [X] xarray \_FillValue needs to be turned off somehow
  - [X] place display(dashboard) as a separate notebook cell
  - [ ] on load of a grid
@@ -91,3 +96,5 @@
  - [ ] Place additional projection metadata into MOM6 grid files
    - [X] Added proj string to netCDF file
    - [ ] Tri polar grid description
+ - [ ] Work with generic non-mapping reference systems for use with some of the sample MOM6 problems
+ 

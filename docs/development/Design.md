@@ -40,6 +40,9 @@ Field import:
  * Build boundary and forcing files
  * Adaptation of other routines from pyroms
 
+Ability to work in mapping and non-mapping frames of reference.  The
+ability to work in raw coordinate systems as needed by example problems.
+
 ### Operational modes
 
 Desired operational modes

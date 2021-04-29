@@ -1,5 +1,29 @@
 # Change Log
 
+# 2021-04-28
+
+ - Raphael pointed us code he wrote that allows conversion from XY to LATLON.  It was
+   exactly what we needed to get the IBCAO grid working in the polar projection.
+ - Unify MOM6/proj defaults for grid generation
+   - Default radius is 6.378137e6
+   - Default ellipse is GRS80
+ - Add warnings to various areas where we create the projection string
+ - Add warnings to determiniation of the radius of the earth to use
+ - Add three examples on how to create the IBCAO grid.  One example shows how
+   things change when a slightly different radius is specified for WGS84.
+ - Move some milestones around with polar grids now possibly working
+ - Keep milestones under 1.0 for now
+ - Add datetime and pyproj to gridutils imports
+ - Return a version number for gridutils library
+ - Better metadata for xarray/netCDF structures
+ - Determine earth radius based on projection string on the fly
+ - Move construction of proj string into a function so it will work for grid and
+   plot projections as needed
+ - TODO: improve documentation for grid and plot parameters and finish implementation work
+   for all projections.  For now, keep the grid construction simplified.
+ - Added a plotting demo for illustrating unstructured grid interpolation and differences
+   between using grid edges and grid center points for plotting.
+
 # 2021-04-26
 
  - Avoid use of xesmf 0.5.2

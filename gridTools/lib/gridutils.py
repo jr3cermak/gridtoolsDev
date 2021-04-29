@@ -1,11 +1,9 @@
 # General imports and definitions
-import os, sys
-import cartopy
+import os, sys, datetime, logging
+import cartopy, warnings, pdb
 import numpy as np
 import xarray as xr
-import warnings
-import pdb
-import logging
+from pyproj import CRS
 
 # Needed for panel.pane                
 from matplotlib.figure import Figure
@@ -26,7 +24,9 @@ class GridUtils:
     def __init__(self, app={}):
         # Constants
         self.PI_180 = np.pi/180.
-        self._default_Re = 6.378e6
+        # Adopt GRS80 ellipse from proj
+        self._default_Re = 6.378137e6
+        self._default_ellps = 'GRS80'
         
         # File pointer
         self.xrOpen = False
@@ -240,9 +240,36 @@ class GridUtils:
         levels.'''
         return self.msgLogLevel
 
+    def getRadius(self, param):
+        '''Return a radius based on projection string.  If parsing the projection string
+        fails, the radius from GRS80/WGS84 is used.'''
+
+        # GRS80/WGS84
+        radiusVal = self._default_Re
+
+        if 'projection' in param:
+            if 'proj' in param['projection']:
+                try:
+                    crs = CRS.from_proj4(param['projection']['proj'])
+                    radiusVal = crs.ellipsoid.semi_major_metre
+                except:
+                    msg = "WARNING: Using default ellipsoid.  Projection string was not used."
+                    self.printMsg(msg, level=logging.WARNING)
+                    self.debugMsg(msg)
+                    pass
+
+        return radiusVal
+
     def getVerboseLevel(self):
         '''Get the current verbose level for GridUtils()'''
         return self.verboseLevel
+
+    def getVersion(self):
+        '''Return the version number of this library'''
+
+        softwareRevision = "0.1"
+
+        return softwareRevision
 
     def printMsg(self, msg, level = logging.INFO):
         '''
@@ -347,9 +374,10 @@ class GridUtils:
     # Grid operations
     
     def clearGrid(self):
-        '''Call this when you want to erase the current grid and grid parameters.  This also
-        clobbers any current plot parameters.
-        Do not call this method between plots of the same grid.'''
+        '''Call this when you want to erase the current grid.  This also
+        clobbers any current grid and plot parameters.
+        Do not call this method between plots of the same grid in different
+        projections.'''
         
         # If there are file resources open, close them first.
         if self.xrOpen:
@@ -367,12 +395,24 @@ class GridUtils:
         '''Compute MOM6 grid metrics: angle_dx, dx, dy and area.'''
 
         self.grid.attrs['grid_version'] = "0.2"
-        self.grid.attrs['code_version'] = "GridTools: beta"
-        self.grid.attrs['history'] = "sometime: GridTools"
+        self.grid.attrs['code_version'] = "GridTools: %s" % (self.getVersion())
+        self.grid.attrs['history'] = "%s: create grid with python GridTools" % (datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
         self.grid.attrs['projection'] = self.gridInfo['gridParameters']['projection']['name']
-        self.grid.attrs['proj'] = self.gridInfo['gridParameters']['projection']['proj']
-        
-        R = 6370.e3 # Radius of sphere        
+        try:
+            self.grid.attrs['proj'] = self.gridInfo['gridParameters']['projection']['proj']
+        except:
+            projString = self.formProjString(self.gridInfo['gridParameters'])
+            if projString:
+                self.grid.attrs['proj'] = projString
+                self.gridInfo['gridParameters']['projection']['proj'] = projString
+            else:
+                msg = "WARNING: Projection string could not be determined from grid parameters."
+                self.printMsg(msg, level=logging.WARNING)
+
+        #R = 6370.e3 # Radius of sphere
+        # TODO: get ellipse setting
+        #R = self._default_Re
+        R = self.getRadius(self.gridInfo['gridParameters'])
 
         # Make a copy of the lon grid as values are changed for computation
         lon = self.grid.x.copy()
@@ -401,9 +441,61 @@ class GridUtils:
         self.grid.area.attrs['units'] = 'meters^2'
 
         return
+
+    def formProjString(self, param):
+        '''Create a projection string from parameter attributes.'''
+
+        projString = None
+
+        if 'projection' in param:
+            if 'name' in param['projection']:
+                if param['projection']['name'] == 'Mercator':
+                    projString = "+proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +units=m %s +no_defs" %\
+                        (param['projection']['lon_0'])
+
+                if param['projection']['name'] in ['NorthPolarStereo', 'SouthPolarStereo']:
+                    projString = "+proj=stere +lat_0=%s +lon_0=%s +x_0=0.0 +y_0=0.0 +no_defs" %\
+                        (param['projection']['lat_0'],
+                        param['projection']['lon_0'])
+
+                if param['projection']['name'] == 'LambertConformalConic':
+                    projString = "+proj=lcc +lon_0=%s +lat_0=%s +x_0=0.0 +y_0=0.0 +lat_1=%s +lat_2=%s +no_defs" %\
+                        (param['projection']['lat_0'],
+                        param['projection']['lon_0'],
+                        param['projection']['lat_1'],
+                        param['projection']['lat_2'])
+
+                if projString:
+                    if 'ellps' in param['projection']:
+                        projString = "+ellps=%s %s" % (param['projection']['ellps'], projString)
+                    else:
+                        projString = "+ellps=%s %s" % (self._default_ellps, projString)
+                        msg = "WARNING: Using default ellipse (%s)." % (self._default_ellps)
+                        self.printMsg(msg, level=logging.WARNING)
+                    if 'R' in param['projection']:
+                        projString = "+R=%s %s" % (param['projection']['R'], projString)
+
+        if projString == None:
+            msg = "Unable to set projection string."
+            self.printMsg(msg, level=logging.WARNING)
+            self.debugMsg(msg)
+
+        return projString
    
     def makeGrid(self):
         '''Using supplied grid parameters, populate a grid in memory.'''
+
+        # Try to form projection string for future use
+        try:
+            projString = formProjString(self.gridInfo['gridParameters'])
+            if projString:
+                self.gridInfo['gridParameters']['projection']['proj'] = projString
+            else:
+                msg = "WARNING: Projection string could not be determined from grid parameters."
+                self.printMsg(msg, level=logging.WARNING)
+        except:
+            msg = "WARNING: Projection string could not be determined from grid parameters."
+            self.printMsg(msg, level=logging.WARNING)
 
         # Make a grid in the Mercator projection
         if self.gridInfo['gridParameters']['projection']['name'] == "Mercator":      
@@ -436,16 +528,9 @@ class GridUtils:
             self.grid['y'] = (('nyp','nxp'), latGrid)
             self.grid.y.attrs['units'] = 'degrees_north'
 
-            # This technique seems to return a Lambert Conformal Projection with the following properties
-            # This only works if the grid does not overlap a polar point
-            # (lat_0 - (dy/2), lat_0 + (dy/2))
-            #self.gridInfo['gridParameters']['projection']['lat_1'] =\
-               # self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
-            #self.gridInfo['gridParameters']['projection']['lat_2'] =\
-              #  self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
-            self.gridInfo['gridParameters']['projection']['proj'] =\
-                    "+ellps=WGS84 +proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +units=m +no_defs" %\
-                        (self.gridInfo['gridParameters']['projection']['lon_0'])
+            #self.gridInfo['gridParameters']['projection']['proj'] =\
+            #        "+ellps=WGS84 +proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +units=m +no_defs" %\
+            #            (self.gridInfo['gridParameters']['projection']['lon_0'])
 
             # Declare the xarray dataset open even though it is really only in memory at this point
             self.xrOpen = True
@@ -484,10 +569,10 @@ class GridUtils:
                 #self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
             #self.gridInfo['gridParameters']['projection']['lat_2'] =\
                # self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
-            self.gridInfo['gridParameters']['projection']['proj'] =\
-                    "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
-                        (self.gridInfo['gridParameters']['projection']['lat_0'],
-                        self.gridInfo['gridParameters']['projection']['lon_0'])
+            #self.gridInfo['gridParameters']['projection']['proj'] =\
+            #        "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
+            #            (self.gridInfo['gridParameters']['projection']['lat_0'],
+            #            self.gridInfo['gridParameters']['projection']['lon_0'])
 
             # Declare the xarray dataset open even though it is really only in memory at this point
             self.xrOpen = True
@@ -526,10 +611,10 @@ class GridUtils:
                 #self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
             #self.gridInfo['gridParameters']['projection']['lat_2'] =\
                 #self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
-            self.gridInfo['gridParameters']['projection']['proj'] =\
-                    "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
-                        (self.gridInfo['gridParameters']['projection']['lat_0'],
-                        self.gridInfo['gridParameters']['projection']['lon_0'])
+            #self.gridInfo['gridParameters']['projection']['proj'] =\
+            #        "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
+            #            (self.gridInfo['gridParameters']['projection']['lat_0'],
+            #            self.gridInfo['gridParameters']['projection']['lon_0'])
 
             # Declare the xarray dataset open even though it is really only in memory at this point
             self.xrOpen = True
@@ -569,12 +654,12 @@ class GridUtils:
                 self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
             self.gridInfo['gridParameters']['projection']['lat_2'] =\
                 self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
-            self.gridInfo['gridParameters']['projection']['proj'] =\
-                    "+ellps=WGS84 +proj=lcc +lon_0=%s +lat_0=%s +x_0=0.0 +y_0=0.0 +lat_1=%s +lat_2=%s +no_defs" %\
-                        (self.gridInfo['gridParameters']['projection']['lat_0'],
-                        self.gridInfo['gridParameters']['projection']['lon_0'],
-                        self.gridInfo['gridParameters']['projection']['lat_1'],
-                        self.gridInfo['gridParameters']['projection']['lat_2'])
+            #self.gridInfo['gridParameters']['projection']['proj'] =\
+            #        "+ellps=WGS84 +proj=lcc +lon_0=%s +lat_0=%s +x_0=0.0 +y_0=0.0 +lat_1=%s +lat_2=%s +no_defs" %\
+            #            (self.gridInfo['gridParameters']['projection']['lat_0'],
+            #            self.gridInfo['gridParameters']['projection']['lon_0'],
+            #            self.gridInfo['gridParameters']['projection']['lat_1'],
+            #            self.gridInfo['gridParameters']['projection']['lat_2'])
 
             # Declare the xarray dataset open even though it is really only in memory at this point
             self.xrOpen = True
@@ -1013,6 +1098,7 @@ class GridUtils:
                 'nx': number of grid points along the x or i axis [integer]
                 'ny': number of grid points along the y or i axis [integer]
                 'tilt': degrees to rotate the grid [float, only available in LambertConformalConic]
+                'gridResolution': 
                 
                 SUBKEY: 'projection' (mostly follows proj.org terminology)
                     'name': Grid projection ['LambertConformalConic','Mercator','NorthPolarStereo']
@@ -1190,8 +1276,3 @@ class GridUtils:
         if not(subKey):
             self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
 
-    # Functions from pyroms/examples/grid_MOM6/convert_ROMS_grid_to_MOM6.py
-    # Attribution: Mehmet Ilicak via Alistair Adcroft
-    # Requires spherical.py (copied to local lib)
-    # Based on code written by Alistair Adcroft and Matthew Harrison of GFDL
-    
