@@ -56,15 +56,15 @@ class App:
         self.debugLevelDict = dict(zip(self.debugLevelNames, self.debugLevelValues))
 
         # Available plot projections
-        self.plotProjections = ["Nearside Perspective", "Mercator", "Lambert Conformal Conic", "North Polar Stereographic", "South Polar Stereographic"]
-        self.plotProjectionsGridTools = ["NearsidePerspective", "Mercator", "LambertConformalConic", "NorthPolarStereo", "SouthPolarStereo"]
+        self.plotProjections = ["Nearside Perspective", "Mercator", "Lambert Conformal Conic", "Stereographic"]
+        self.plotProjectionsGridTools = ["NearsidePerspective", "Mercator", "LambertConformalConic", "Stereographic"]
         self.plotProjectionsDict = dict(zip(self.plotProjections, self.plotProjectionsGridTools))
 
         # Supported grid projections
-        self.projNames = ["Mercator", "Lambert Conformal Conic", "North Polar Stereographic", "South Polar Stereographic"]
-        self.gridToolNames = ["Mercator", "LambertConformalConic", "NorthPolarStereo", "SouthPolarStereo"]
+        self.projNames = ["Mercator", "Lambert Conformal Conic", "Stereographic"]
+        self.gridToolNames = ["Mercator", "LambertConformalConic", "Stereographic"]
         self.projNamesGridTools = dict(zip(self.projNames, self.gridToolNames))
-        self.projCarto = [ccrs.Mercator(), ccrs.LambertConformal(), ccrs.NorthPolarStereo(), ccrs.SouthPolarStereo()]
+        self.projCarto = [ccrs.Mercator(), ccrs.LambertConformal(), ccrs.Stereographic()]
         self.projDict = dict(zip(self.projNames, self.projCarto))
 
         # Plot grid modes

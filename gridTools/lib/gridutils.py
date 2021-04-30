@@ -396,7 +396,7 @@ class GridUtils:
 
         self.grid.attrs['grid_version'] = "0.2"
         self.grid.attrs['code_version'] = "GridTools: %s" % (self.getVersion())
-        self.grid.attrs['history'] = "%s: create grid with python GridTools" % (datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
+        self.grid.attrs['history'] = "%s: created grid with GridTools library" % (datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
         self.grid.attrs['projection'] = self.gridInfo['gridParameters']['projection']['name']
         try:
             self.grid.attrs['proj'] = self.gridInfo['gridParameters']['projection']['proj']
@@ -453,7 +453,7 @@ class GridUtils:
                     projString = "+proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +units=m %s +no_defs" %\
                         (param['projection']['lon_0'])
 
-                if param['projection']['name'] in ['NorthPolarStereo', 'SouthPolarStereo']:
+                if param['projection']['name'] in ['NorthPolarStereo', 'SouthPolarStereo', 'Stereographic']:
                     projString = "+proj=stere +lat_0=%s +lon_0=%s +x_0=0.0 +y_0=0.0 +no_defs" %\
                         (param['projection']['lat_0'],
                         param['projection']['lon_0'])
@@ -982,6 +982,9 @@ class GridUtils:
         if plotProjection == 'NearsidePerspective':
             crs = cartopy.crs.NearsidePerspective(central_longitude=central_longitude,
                 central_latitude=central_latitude, satellite_height=satellite_height)
+        if plotProjection == 'Stereographic':
+            crs = cartopy.crs.Stereographic(central_longitude=central_longitude,
+                central_latitude=central_latitude, true_scale_latitude=true_scale_latitude)
         if plotProjection == 'NorthPolarStereo':
             crs = cartopy.crs.NorthPolarStereo(central_longitude=central_longitude,
                 true_scale_latitude=true_scale_latitude)
@@ -1079,29 +1082,29 @@ class GridUtils:
         
         .. note::
             Core gridParameter list.  See other grid functions for other potential options.  
-            Defaults are marked with an asterisk(*) below.
-            
-            The gridParameter has a 'projection' subkey that allows 
-            
-            In general, coordinates are consistent between degrees or meters.  There may
-            be some obscure cases where options may be mixed.
+            Defaults are marked with an asterisk(*) below.  See the user manual for more
+            details.
             
                 'centerUnits': Grid center point units ['degrees'(*), 'meters']
-                'east0': Meters east of grid center 
-                'north0': Meters north of grid center
-                'lon0': Longitude of grid center (may not be the same as the projection center)
-                'lat0': Latitude of grid center (may not be the same as the projection center)
-                'dx': grid length along x or i axis (generally EW)
-                'dy': grid length along y or j axis (generally NS)
-                'dxUnits': grid cell units ['degrees'(*), 'meters']
-                'dyUnits': grid cell units ['degrees'(*), 'meters']
-                'nx': number of grid points along the x or i axis [integer]
-                'ny': number of grid points along the y or i axis [integer]
+                'centerX': Grid center in the j direction [float]
+                'centerY': Grid center in the i direction [float]
+                'dx': grid length in the j direction [float]
+                'dy': grid length in the i direction [float]
+                'dxUnits': grid length units ['degrees'(*), 'meters']
+                'dyUnits': grid length units ['degrees'(*), 'meters']
+                'nx': number of grid points along the j direction [integer]
+                'ny': number of grid points along the i direction [integer]
                 'tilt': degrees to rotate the grid [float, only available in LambertConformalConic]
-                'gridResolution': 
+                'gridResolution': grid cell size in i and j direction [float]
+                'gridResolutionX': grid cell size in the j direction [float]
+                'gridResolutionY': grid cell size in the i direction [float]
+                'gridResoultionUnits': grid cell units in the i and j direction ['degrees'(*), 'meters']
+                'gridResoultionXUnits': grid cell units in the j direction ['degrees'(*), 'meters']
+                'gridResoultionYUnits': grid cell units in the i direction ['degrees'(*), 'meters']
+
                 
                 SUBKEY: 'projection' (mostly follows proj.org terminology)
-                    'name': Grid projection ['LambertConformalConic','Mercator','NorthPolarStereo']
+                    'name': Grid projection ['LambertConformalConic','Mercator','Stereographic']
                     'lat_0': Latitude of projection center [degrees, 0.0(*)]
                     'lat_1': First standard parallel (latitude) [degrees, 0.0(*)]
                     'lat_2': Second standard parallel (latitude) [degrees, 0.0(*)]
@@ -1109,8 +1112,8 @@ class GridUtils:
                               Takes precedence over k_0 if both options are used together.
                               For stereographic, if not set, will default to lat_0.
                     'lon_0': Longitude of projection center [degrees, 0.0(*)]
-                    'ellps': See proj -le for a list of available ellipsoids [GRS80(*)]
-                    'R': Radius of the sphere given in meters.  If both R and ellps are given, R takes precedence.
+                    'ellps': [GRS80(*)]
+                    'R': Radius of the sphere given in meters.
                     'x_0': False easting (meters, 0.0(*))
                     'y_0': False northing (meters, 0.0(*))
                     'k_0': Depending on projection, this value determines the scale factor for natural origin or the ellipsoid (1.0(*))
@@ -1118,11 +1121,10 @@ class GridUtils:
                 MOM6 specific options:
                 
                 'gridMode': 2 = supergrid(*); 1 = actual grid [integer, 1 or 2(*)]
-                'gridResolution': Inverse grid resolution scale factor [float, 1.0(*)]        
 
             Not to be confused with plotParameters which control how this grid or other
             information is plotted.  For instance, the grid projection and the requested plot
-            can be in another projection.
+            can be in different projections.
             
         """
         
@@ -1220,10 +1222,9 @@ class GridUtils:
         :rtype: none
         
         .. note::
-            Plot parameters persist for as long as the object exists.
-            
-            Here is a core list of plot parameters.  Some parameters may be
-            grid type specific.
+            Plot parameters persist for as long as the python object exists.
+
+            See the user manual for more details.
             
                 'figsize': tells matplotlib the figure size [width, height in inches (6.4, 4.8)]
                 'extent': [x0, x1, y0, y1] map extent of given coordinate system (see extentCRS) [default is []]
@@ -1242,7 +1243,7 @@ class GridUtils:
                     For dense gridcells, you can try a very thin linewidth of 0.1.
 
                 SUBKEY: 'projection' (mostly follows proj.org terminology)
-                    'name': Grid projection ['LambertConformalConic','Mercator','NorthPolarStereo']
+                    'name': Grid projection ['LambertConformalConic','Mercator','Stereographic']
                     'lat_0': Latitude of projection center [degrees, 0.0(*)]
                     'lat_1': First standard parallel (latitude) [degrees, 0.0(*)]
                     'lat_2': Second standard parallel (latitude) [degrees, 0.0(*)]

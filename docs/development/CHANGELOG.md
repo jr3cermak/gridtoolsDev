@@ -1,8 +1,25 @@
 # Change Log
 
+# 2021-04-29
+
+ - Unify user manual.  The user manual will hold the bulk of the operational details.  Application details
+   will be a small subset enough to explain the operational details of the graphical user interface.
+ - Merge NorthPolarStero and SouthPolarStereo to Sterographic in which grid generation will
+   need to pay attention to lat_0 defined for the projection.
+ - Update application to merge North and South polar stereographic to Stereographic.
+ - TODO: grab github revision used by each specific mybinder.org instance
+ - User can specify ellipsoid (ellps) and earth radius (R) through projection options to grid and plot.
+ - Do not forecast milestones past the next logical one; put other major milestones into a generic X milestone.
+ - We assume the user is familiar with the python programming language.  We will point the user to helpful
+   materials when appropriate.
+ - API CHANGES
+   - Implementation requires vetting application and examples for proper operation
+   - Change user specification of grid center to "centerX" and "centerY" and specify those units in "centerUnits".
+ - BUG: Updating grid or plot parameter nested arguments will get clobbered.  Queued to be fixed later.
+
 # 2021-04-28
 
- - Raphael pointed us code he wrote that allows conversion from XY to LATLON.  It was
+ - Raphael pointed us code he wrote that allows conversion from XY to LATLON over a 2D field.  It was
    exactly what we needed to get the IBCAO grid working in the polar projection.
  - Unify MOM6/proj defaults for grid generation
    - Default radius is 6.378137e6

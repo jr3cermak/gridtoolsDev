@@ -5,6 +5,11 @@ adapted from the ROMS ocean model and for specific use in the MOM6 ocean model.
 One could hope it can be kept generic enough to support any model.  The focus
 is on supporting the MOM6 ocean model.
 
+For in depth details about the MOM6 ocean model, please visit provided
+[wiki](https://github.com/NOAA-GFDL/MOM6-examples/wiki) pages.  Technical
+details about this repository can be found below.  For usage of
+the GridUtils library, please visit the [user manual](docs/manual/GridUtils.md).
+
 Required items:
  * spherical.py
  * gridutils.py
@@ -172,6 +177,7 @@ to upkeep of a manual index.
     * [MOM6](docs/grids/MOM6.md): MOM6 grids
     * [MOM6ROMS](docs/grids/MOM6ROMS.md): Important things between MOM6 and ROMS grids
     * [ROMS](docs/grids/ROMS.md): ROMS grids
+  * [manual](docs/manual/GridUtils.md): User manual for the GridUtils library
   * [resources](docs/resources)
     * [Bathymetry](docs/resources/Bathymetry)
 

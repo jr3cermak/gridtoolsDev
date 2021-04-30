@@ -8,27 +8,36 @@
    - [ ] Generify examples
    - [ ] Test application and examples for LCC grid generation
    - [ ] Test application for examples regular Mercator grid generation
+   - [ ] Test application for examples stereographic grid generation
    - [ ] Tackle critical TODO items
    - [ ] Publish initial commit to ESMG
-   - [ ] Ensure mybinder.org works with the github commit
+   - [ ] Ensure mybinder.org works with the published github commit
  - [ ] Version 0.2
+   - [ ] Estabish sphinx document generator and link to readthedocs
    - [ ] Allow import of ROMS grid for conversion to MOM6
- - [ ] Verison 0.3
+ - [ ] Verison 0.x
    - [ ] Bathymetry and boundery condition support
    - [ ] Grid filling options (flooding)
- - [ ] Version 0.5
    - [ ] Grid mask editor
+   - [ ] This library is installable via pip
+   - [ ] This library is installable via conda
+
+# BUGS
+ - [ ] A nested dictionary will clobber other nested elements instead of updating elements.  Recode
+       `setPlotParameters` and `setGridParameters` to recursively update dictionary elements.
 
 # TASKS
 
  - [ ] general documentation
    - [ ] grid parameters
    - [ ] plot parameters
+   - [ ] enable sphinx as the documentation generator
+   - [ ] link to readthedocs
  - [ ] grid creation/editor
    - [ ] grid metrics
      - [X] Spherical solution is complete via Niki's ROMS to MOM6 converter
      - [X] Mercator (angle_dx might be 0 as it is lined up along latitude lines; except for tilt?)
-     - [ ] Polar (might be the same as spherical?)
+     - [ ] Polar
    - [ ] make Lambert Conformal Conic Grids; needs testing
      - [ ] LCC cannot take custom lat_1 and lat_2; it generates lat_1 and lat_2 based on grid inputs
      - [X] Update new lat_1 and lat_2 for application after makeGrid() is run
@@ -36,10 +45,10 @@
    - [ ] make Mercator grids; needs testing
    -   [ ] issue a warning if tilt is non-zero
    - [ ] grid generation in other projections
-   - [ ] on saveGrid() convert lon [+0,+360] to [-180,+180]
-   - [ ] Unify ellipse radius (R) constants throughout code
-     - [X] Gridutils initializes with proj WGS84
-     - [ ] Allow user control
+   - [X] on saveGrid() convert lon [+0,+360] to [-180,+180]
+   - [X] Unify ellipse radius (R) constants throughout code
+     - [X] Gridutils initializes with proj GRS80
+     - [X] Allow user control
  - [ ] grid mask editor (land, etc)
  - [ ] integration of bathymetric sources and apply to grids
        Niki: https://github.com/nikizadehgfdl/ocean_model_topog_generator
@@ -55,9 +64,11 @@
    - [ ] calculate R
    - [ ] calculate tilt (may not be possible)
    - [ ] update any tool metadata that is appropriate for that grid
+   - [ ] parse and utilize any available proj string; must be a global or variable attribute
  - [X] Create an application method within the GridUtils() class; GridTools().app()
  - [ ] Using xesmf regridder and other tools to create bathymetry and other forcing and boundary files
  - [ ] Develop a field "flood" routine similar to pyroms
+ - [ ] create a setup.py to allow this library to be installable via pip
 
 # TODO
 
@@ -79,6 +90,7 @@
    - [X] Create options in application and other tools for user configuration of logging and output.
    - [X] Create a message buffer/system for information.
    - [ ] Create a separate app to watch a log file? https://discourse.holoviz.org/t/scrollable-log-text-viewer/317
+   - [ ] log github revision used by mybinder.org instances
  - [ ] For now, the gridParameters are always in reference to a center point in a grid
    in the future, one may fix a side or point of the grid and grow out from that point
    instead of the center.
@@ -97,4 +109,6 @@
    - [X] Added proj string to netCDF file
    - [ ] Tri polar grid description
  - [ ] Work with generic non-mapping reference systems for use with some of the sample MOM6 problems
- 
+ - [ ] application: enable user configurable plot and widget sizes (hardcoded in __init__)
+ - [ ] Refactor any grid math into a gridmath library.  Any grid computation that can stand on its own
+       should be moved into a separate gridmath library.  Think about any dask optimization.

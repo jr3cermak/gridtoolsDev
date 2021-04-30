@@ -25,6 +25,7 @@ These are people, references and bookmarks that provided useful information to m
 ## Bookmarks
  * https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
  * https://en.wikipedia.org/wiki/World_Geodetic_System
+ * https://math.libretexts.org/Bookshelves/Calculus/Book%3A_Calculus_(OpenStax)/12%3A_Vectors_in_Space/12.7%3A_Cylindrical_and_Spherical_Coordinates#:~:text=In%20the%20Cartesian%20coordinate%20system%2C%20the%20location%20of%20a%20point,an%20angle%20measure%20(%CE%B8).
  * http://mathworld.wolfram.com
  * https://matplotlib.org/stable/gallery/images_contours_and_fields/image_masked.html
  * https://matplotlib.org/stable/gallery/images_contours_and_fields/pcolormesh_levels.html#sphx-glr-gallery-images-contours-and-fields-pcolormesh-levels-py
@@ -59,3 +60,7 @@ These are people, references and bookmarks that provided useful information to m
  * https://xarray.pydata.org/en/stable/dask.html
 
 ## Paywall Bookmarks
+
+## For Review Later
+
+ * http://dsrs.atmos.umd.edu/DATA/aosc/greenland/code/MOM4SODA/MOM_TEST/src/tools/make_hgrid/make_hgrid.c
