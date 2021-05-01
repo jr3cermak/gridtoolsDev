@@ -99,6 +99,15 @@ parameters if the grid is to be used on a geographic surface.  In most
 cases, the grid and plot projections will be the same unless you wish
 to see the grid in a different projection.
 
+The library has also been designed to allow the grid center to be
+in a different location than the projection center.  The library
+makes *limited* assumptions for parameters and it is highly
+recommended to provide complete information no matter how
+redundant it may seem.
+
+There are certain assumptions made by the `pyproj` library for
+certain projection parameters.
+
 # Grid Creation
 
 The library supports one mode of grid creation at present.  The user
@@ -196,28 +205,28 @@ Parameter definitions:
 Parameter | Definition | Type | Valid Values | Default
 --------- | ---------- | ---- | ------------ | -------
 centerUnits | units for center grid point | string | 'degrees', 'meters' | 'degrees'
-centerX | grid center in j direction | float | +0.0 to +360.0 | n/a
-centerY | grid center in i direction | float | -90.0 to +90.0 | n/a
-dx | grid length in the j direction | float | **(1)** | n/a
-dy | grid length in the i direction | float | **(1)** | n/a
+centerX | grid center in j direction | float | **(1)** | n/a
+centerY | grid center in i direction | float | **(1)** | n/a
+dx | grid length in the j direction | float | **(2)** | n/a
+dy | grid length in the i direction | float | **(2)** | n/a
 dxUnits | grid length units | string | 'degrees', 'meters' | 'degrees'
 dyUnits | grid length units | string | 'degrees', 'meters' | 'degrees'
-nx | number of grid points in the j direction | integer | **(2)** | n/a
-ny | number of grid points in the i direction | integer | **(2)** | n/a
-tilt | degree to rotate the grid | float | 0.0 to 360.0 | 0.0 **(3)**
-gridResolution | grid cell size in the i and j direction | float | **(4)** | n/a
-gridResolutionX | grid cell size in the j direction | float | **(4)** | n/a
-gridResolutionY | grid cell size in the i direction | float | **(4)** | n/a
+nx | number of grid points in the j direction | integer | **(3)** | n/a
+ny | number of grid points in the i direction | integer | **(3)** | n/a
+tilt | degree to rotate the grid | float | 0.0 to 360.0 | 0.0 **(4)**
+gridResolution | grid cell size in the i and j direction | float | **(5)** | n/a
+gridResolutionX | grid cell size in the j direction | float | **(5)** | n/a
+gridResolutionY | grid cell size in the i direction | float | **(5)** | n/a
 gridResolutionUnits | grid cell size units in the i and j direction | string | 'degrees', 'meters' | 'degrees'
 gridResolutionXUnits | grid cell size units in the j direction | string | 'degrees', 'meters' | 'degrees'
 gridResolutionYUnits | grid cell size units in the i direction | string | 'degrees', 'meters' | 'degrees'
 
 NOTES:
- * **(1)** This is a reasonable float number representing degrees or meters.
- * **(2)** This feature has not been implemented yet.
- * **(3)** This parameter only applies to the Lambert Conformal Conic projection.
- * **(4)** Specifying gridResolutionX and/or gridResolutionY will override the value.
-specified for gridResolution
+ * **(1)** If centerUnits is in 'degrees', the limits for centerX are +0.0 to +360.0 and centerY are -90.0 to +90.0.
+ * **(2)** This is a reasonable float number representing degrees or meters.
+ * **(3)** This feature has not been implemented yet.
+ * **(4)** This parameter only applies to the Lambert Conformal Conic projection.
+ * **(5)** Specifying gridResolutionX and/or gridResolutionY will override the value specified for gridResolution
 
 MOM6 parameter definitions:
 
@@ -227,11 +236,8 @@ gridMode | grid generation mode | integer | **(1)** | 2
 ensureEvenJ | ensure even number of grid points in the j direction | boolean | True, False | True
 
 NOTES:
- * **(1)** Valid values are 1 and 2.  Grid mode one (1) generates only the specified grid with
-grid cell distances given by the grid resolution.  Grid metrics will NOT be computed.  Grid
-mode two (2) generates a standard MOM6 grid with supergrid.  Grid metrics will be computed.
- * `ensureEvenJ` flag allows the grid generator clip the grid if the number of points in
-the j direction is uneven.
+ * **(1)** Valid values are 1 and 2.  Grid mode one (1) generates only the specified grid with grid cell distances given by the grid resolution.  Grid metrics will NOT be computed.  Grid mode two (2) generates a standard MOM6 grid with supergrid.  Grid metrics will be computed.
+ * `ensureEvenJ` flag allows the grid generator clip the grid if the number of points in the j direction is uneven.
 
 Projection definitions:
 
@@ -250,14 +256,9 @@ y\_0 | false northing | float | always expressed in meters | 0.0
 k\_0 | scale factor for natural origin or the ellipsoid | float | **(2)** | 1.0
 
 NOTES:
- * **(1)** This parameters take precedence over `k_0` if both options are specified.  For
-stereographic projections, `lat_0` is used if `lat_ts` is not specified.
- * **(2)** This is a proj string that sets the ellipsoid of the earth or sphere.  See `proj -le`
-to show all available ellipoids.  Even if an ellipsoid is selected, the radius can be changed
-by also supplying the `R` argument.
- * **(3)** The radius is normally defined by the ellipsoid.  Use this parameter if the radius
-of the sphere is slightly different.  Depending on the projection selected, the parameter `k_0`
-may scale the natural origin or the ellipsoid.
+ * **(1)** This parameters take precedence over `k_0` if both options are specified.  For stereographic projections, `lat_0` is used if `lat_ts` is not specified.
+ * **(2)** This is a proj string that sets the ellipsoid of the earth or sphere.  See `proj -le` to show all available ellipoids.  Even if an ellipsoid is selected, the radius can be changed by also supplying the `R` argument.
+ * **(3)** The radius is normally defined by the ellipsoid.  Use this parameter if the radius of the sphere is slightly different.  Depending on the projection selected, the parameter `k_0` may scale the natural origin or the ellipsoid.
 
 ## Plot
 
@@ -291,6 +292,7 @@ grd.setPlotParameters({
 		'k_0': 1.0
 	}
 })
+```
 
 Parameter definitions:
 

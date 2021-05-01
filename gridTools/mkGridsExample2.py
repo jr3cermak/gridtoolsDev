@@ -9,10 +9,32 @@ grd = GridUtils()
 grd.printMsg("This demonstrates how to work with the debugging system of GridUtils().")
 grd.printMsg("")
 
+grd.printMsg("This code generates some useful debugging information by gathering version")
+grd.printMsg("for specific libraries.  This is helpful to software developers.  The")
+grd.printMsg("developers may ask for other information depending on the nature of")
+grd.printMsg("the problem.")
+grd.printMsg("---")
+
+from sysinfo import SysInfo
+info = SysInfo()
+info.show(vList=['platform','python','esmf','esmpy','xgcm','xesmf',
+                 'netcdf4','numpy','xarray',
+                 'cartopy','matplotlib',
+                 'jupyter_core','jupyterlab','notebook',
+                 'dask'])
+grd.printMsg("---")
+
+grd.printMsg("This demonstrates how to access the internal help messages from the GridUtils()")
+grd.printMsg("library.  You may need to exit the help page by pressing the q key.")
+# Help (module)
+print(help(GridUtils))
+grd.printMsg("")
+
 # Without debugging, a failed assigment to a plot parameter subkey will result in
 # a message and the program will continue running.  We can easily cause a problem
 # by trying to use a non-existing subkey.  The only one that exists at the moment is
 # projection.
+grd.printMsg("")
 grd.printMsg("Using a 'test' subkey to try and assign {'a': 1} into plot parameters.")
 testParameters = {
         'a': 1
@@ -62,3 +84,7 @@ grd.setDebugLevel(2)
 
 grd.printMsg("""Attempting to run: grd.setPlotParameters(testParameters, subKey='test')""")
 grd.setPlotParameters(testParameters, subKey='test')
+
+# No code beyond this point will run as the program will stop
+# with an exception.
+print("The program should never reach this point and should not be printed.")

@@ -120,3 +120,5 @@
        should be moved into a separate gridmath library.  Think about any dask optimization.
  - [ ] gridtools::makeGrid() will need a refactor to work with other grid types
  - [ ] refactor expansion/clipping of grid points when fitting grid
+ - [ ] Add a notebook or two that demonstrates some of the esoteric API
+       features of the library: help, debugging, etc.

@@ -1,5 +1,21 @@
 # Change Log
 
+# 2021-05-01
+
+ - Move generic API demonstrations into mkGridsExample2.py so it
+   does not detract from specific grid generation demonstrations
+   in mkGridsIterative.ipynb.
+ - API CHANGES (incomplete)
+   - Enforce grid center parameters: centerX, centerY, centerUnits.
+ - mkGridsInterative.ipynb (incomplete)
+   - Add Niki's example of a Stereographic grid
+   - Add Niki's example of a rotated Mercator grid
+ - Added more of Niki's functions for Mercator grid generation
+ - NOTE: Grid generation techniques sometimes require projection
+   information and sometimes grid generation techniques change
+   projection information.  All details should be specifically
+   documented.
+
 # 2021-04-30
 
  - API CHANGES

@@ -718,7 +718,62 @@ class GridUtils:
             # Compute grid metrics
             self.computeGridMetrics()
                                 
-    # Original functions provided by Niki Zadeh - Lambert Conformal Conic grids
+    # Original functions provided by Niki Zadeh
+
+    # Mercator
+    def rotate_u(x , y, z, ux, uy, uz, theta):
+        """Rotate by angle θ around a general axis (ux,uy,uz)."""
+        c=np.cos(theta)
+        s=np.sin(theta)
+
+        #Normalize, u must be a unit vector for this to work
+        unorm=np.sqrt(ux*ux+uy*uy+uz*uz)
+        ux=ux/unorm
+        uy=uy/unorm
+        uz=uz/unorm
+
+        r11=c+(1-c)*ux*ux
+        r22=c+(1-c)*uy*uy
+        r33=c+(1-c)*uz*uz
+
+        r12=(1-c)*ux*uy-s*uz
+        r21=(1-c)*ux*uy+s*uz
+
+        r13=(1-c)*ux*uz+s*uy
+        r31=(1-c)*ux*uz-s*uy
+
+        r23=(1-c)*uy*uz-s*ux
+        r32=(1-c)*uy*uz+s*ux
+
+        xp= r11*x+r12*y+r13*z
+        yp= r21*x+r22*y+r23*z
+        zp= r31*x+r32*y+r33*z
+        return xp,yp,zp
+
+    def rotate_u_mesh(lam, phi, ux, uy, uz, theta):
+        #Bring the angle to be in [-pi,pi] so that atan2 would work
+        lam=np.where(lam>180,lam-360,lam)
+        #Change to Cartesian coord
+        x,y,z=pol2cart(lam,phi)
+        #Rotate
+        xp,yp,zp=rotate_u(x,y,z,ux,uy,uz,theta)
+        #Change back to polar coords using atan2, in [-pi,pi]
+        lamp,phip=cart2pol(xp,yp,zp)
+        #Bring the angle back to be in [0,2*pi]
+        lamp=np.where(lamp<0,lamp+360,lamp)
+        return lamp,phip
+
+    def generate_rotated_grid(lon0, lon_span, lat0, lat_span, tilt, refine):
+        Ni = int(lon_span*refine)
+        Nj = int(lat_span*refine)
+
+        #Generate a mesh at equator centered at (lon0, lat0)
+        lam_,phi_ = generate_latlon_mesh_centered(Ni,Nj,lon0,lon_span,lat0,lat_span)
+        ux,uy,uz=pol2cart(lon0,lat0)
+        lam_,phi_=rotate_u_mesh(lam_,phi_, ux,uy,uz, tilt*PI_180)  #rotate mesh around u by theta
+        return lam_,phi_
+
+    # Lambert Conformal Conic and Stereographic grids
     # Grid creation and rotation in spherical coordinates
     def mesh_plot(self, lon, lat, lon0=0., lat0=90.):
         """Plot a given mesh with a perspective centered at (lon0,lat0)"""
@@ -873,7 +928,6 @@ class GridUtils:
         return lam_,phi_
 
     # Grid generation functions
-
     def generate_regional_mercator(self, lon0, lon_span, lat0, lat_span, tilt, gRes, gMode):
         """Generate a regional grid centered at (lon0, lat0) with spans of (lon_span, lat_span) and tilted by angle tilt"""
         Ni = int(lon_span / gRes)
