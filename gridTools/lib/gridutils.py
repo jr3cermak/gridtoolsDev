@@ -236,7 +236,7 @@ class GridUtils:
         return self.debugLevel
 
     def getLogLevel(self):
-        '''Get the current debug level for GridUtils().  See setDebugLevel() for available
+        '''Get the current debug level for GridUtils().  See setLogLevel() for available
         levels.'''
         return self.msgLogLevel
 
@@ -341,18 +341,35 @@ class GridUtils:
         self.debugLevel = newLevel
     
     def setLogLevel(self, newLevel):
-        '''Set a new verbose level.
+        '''Set a new logging level.
 
-        :param newLevel: verbose level to set or update
-        :type newLevel: integer
+        :param newLevel: logging level to set or update
+        :type newLevel: integer or string
         :return: none
         :rtype: none
         
         .. note::
             Setting this to a positive number will increase the feedback from this
             module.
+
+            The available levels are:
+
+            Level     Numeric value
+            CRITICAL  50
+            ERROR     40
+            WARNING   30
+            INFO      20
+            DEBUG     10
+            NOTSET    0
         '''
+        if type(newLevel) == str:
+            try:
+                newLevel = logging.getLevelName(newLevel)
+            except:
+                newLevel = logging.INFO
+
         self.msgLogLevel = newLevel
+
         # Also update the logger, if active
         if self.msgLogger:
             self.logHandle.setLevel(newLevel)
@@ -361,14 +378,29 @@ class GridUtils:
         '''Set a new verbose level.
 
         :param newLevel: verbose level to set or update
-        :type newLevel: integer
+        :type newLevel: integer or string
         :return: none
         :rtype: none
         
         .. note::
             Setting this to a positive number will increase the feedback from this
             module.
+
+            The available levels are:
+
+            Level     Numeric value
+            CRITICAL  50
+            ERROR     40
+            WARNING   30
+            INFO      20
+            DEBUG     10
         '''
+        if type(newLevel) == str:
+            try:
+                newLevel = logging.getLevelName(newLevel)
+            except:
+                newLevel = logging.INFO
+                
         self.verboseLevel = newLevel
     
     # Grid operations
@@ -408,6 +440,7 @@ class GridUtils:
             else:
                 msg = "WARNING: Projection string could not be determined from grid parameters."
                 self.printMsg(msg, level=logging.WARNING)
+                self.debugMsg('')
 
         #R = 6370.e3 # Radius of sphere
         # TODO: get ellipse setting
@@ -450,18 +483,25 @@ class GridUtils:
         if 'projection' in param:
             if 'name' in param['projection']:
                 if param['projection']['name'] == 'Mercator':
-                    projString = "+proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +units=m %s +no_defs" %\
+                    projString = "+proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 %s +no_defs" %\
                         (param['projection']['lon_0'])
 
                 if param['projection']['name'] in ['NorthPolarStereo', 'SouthPolarStereo', 'Stereographic']:
-                    projString = "+proj=stere +lat_0=%s +lon_0=%s +x_0=0.0 +y_0=0.0 +no_defs" %\
-                        (param['projection']['lat_0'],
-                        param['projection']['lon_0'])
+                    true_scale_latitude = self.getGridParameter('lat_ts', subKey='projection', default=None)
+                    if true_scale_latitude:
+                        projString = "+proj=stere +lat_0=%s +lon_0=%s +lat_ts=%s +x_0=0.0 +y_0=0.0 +no_defs" %\
+                            (param['projection']['lat_0'],
+                            param['projection']['lon_0'],
+                            param['projection']['lat_ts'])
+                    else:
+                        projString = "+proj=stere +lat_0=%s +lon_0=%s +x_0=0.0 +y_0=0.0 +no_defs" %\
+                            (param['projection']['lat_0'],
+                            param['projection']['lon_0'])
 
                 if param['projection']['name'] == 'LambertConformalConic':
                     projString = "+proj=lcc +lon_0=%s +lat_0=%s +x_0=0.0 +y_0=0.0 +lat_1=%s +lat_2=%s +no_defs" %\
-                        (param['projection']['lat_0'],
-                        param['projection']['lon_0'],
+                        (param['projection']['lon_0'],
+                        param['projection']['lat_0'],
                         param['projection']['lat_1'],
                         param['projection']['lat_2'])
 
@@ -485,20 +525,27 @@ class GridUtils:
     def makeGrid(self):
         '''Using supplied grid parameters, populate a grid in memory.'''
 
-        # Try to form projection string for future use
-        try:
-            projString = formProjString(self.gridInfo['gridParameters'])
-            if projString:
-                self.gridInfo['gridParameters']['projection']['proj'] = projString
-            else:
-                msg = "WARNING: Projection string could not be determined from grid parameters."
-                self.printMsg(msg, level=logging.WARNING)
-        except:
-            msg = "WARNING: Projection string could not be determined from grid parameters."
-            self.printMsg(msg, level=logging.WARNING)
+        # New grid created flag
+        newGridCreated = False
 
         # Make a grid in the Mercator projection
-        if self.gridInfo['gridParameters']['projection']['name'] == "Mercator":      
+        if self.gridInfo['gridParameters']['projection']['name'] == "Mercator":
+
+            # This projection only supports degrees
+            try:
+                unsupported = False
+                if self.gridInfo['gridParameters']['dxUnits'] == 'meters':
+                    unsupported = True
+                if self.gridInfo['gridParameters']['dyUnits'] == 'meters':
+                    unsupported = True
+                if unsupported:
+                    msg = 'ERROR: Mercator grid parameters must be specified in degrees.'
+                    self.printMsg(msg, level=logging.ERROR)
+                    return
+            except:
+                # Default units are degrees
+                pass
+
             if 'tilt' in self.gridInfo['gridParameters'].keys():
                 tilt = self.gridInfo['gridParameters']['tilt']
             else:
@@ -528,16 +575,27 @@ class GridUtils:
             self.grid['y'] = (('nyp','nxp'), latGrid)
             self.grid.y.attrs['units'] = 'degrees_north'
 
-            #self.gridInfo['gridParameters']['projection']['proj'] =\
-            #        "+ellps=WGS84 +proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +units=m +no_defs" %\
-            #            (self.gridInfo['gridParameters']['projection']['lon_0'])
+            newGridCreated = True
 
-            # Declare the xarray dataset open even though it is really only in memory at this point
-            self.xrOpen = True
+        # Make a grid in the Stereographic projection (this should support north and south pole)
+        if self.gridInfo['gridParameters']['projection']['name'] == "Stereographic":
 
-            # Compute grid metrics
-            self.computeGridMetrics()
+            dxUnits = self.getGridParameter('dxUnits', default='Error')
+            dyUnits = self.getGridParameter('dyUnits', default='Error')
 
+            if dxUnits == "Error" or dyUnits == "Error":
+                msg = 'ERROR: Stereographic grid parameters, dx and/or dy, must be specified in degrees or meters.'
+                self.printMsg(msg, level=logging.ERROR)
+                return
+
+            if dxUnits != dyUnits:
+                msg = 'ERROR: Stereographic grid parameters, dx and dy, units must match.'
+                self.printMsg(msg, level=logging.ERROR)
+                return
+
+            # Units = meters
+
+            # Units = degrees
 
         # Make a grid in the North Polar Stereo projection
         if self.gridInfo['gridParameters']['projection']['name'] == "NorthPolarStereo":
@@ -562,23 +620,7 @@ class GridUtils:
             self.grid['y'] = (('nyp','nxp'), latGrid)
             self.grid.y.attrs['units'] = 'degrees_north'
 
-            # This technique seems to return a Lambert Conformal Projection with the following properties
-            # This only works if the grid does not overlap a polar point
-            # (lat_0 - (dy/2), lat_0 + (dy/2))
-            #self.gridInfo['gridParameters']['projection']['lat_1'] =\
-                #self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
-            #self.gridInfo['gridParameters']['projection']['lat_2'] =\
-               # self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
-            #self.gridInfo['gridParameters']['projection']['proj'] =\
-            #        "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
-            #            (self.gridInfo['gridParameters']['projection']['lat_0'],
-            #            self.gridInfo['gridParameters']['projection']['lon_0'])
-
-            # Declare the xarray dataset open even though it is really only in memory at this point
-            self.xrOpen = True
-
-            # Compute grid metrics
-            self.computeGridMetrics()
+            newGridCreated = True
 
 
         # Make a grid in the South Polar Stereo projection
@@ -604,27 +646,26 @@ class GridUtils:
             self.grid['y'] = (('nyp','nxp'), latGrid)
             self.grid.y.attrs['units'] = 'degrees_north'
 
-            # This technique seems to return a Lambert Conformal Projection with the following properties
-            # This only works if the grid does not overlap a polar point
-            # (lat_0 - (dy/2), lat_0 + (dy/2))
-            #self.gridInfo['gridParameters']['projection']['lat_1'] =\
-                #self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
-            #self.gridInfo['gridParameters']['projection']['lat_2'] =\
-                #self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
-            #self.gridInfo['gridParameters']['projection']['proj'] =\
-            #        "+ellps=WGS84 +proj=stere +lat_0=%s +lon_0=%s  +x_0=0.0 +y_0=0.0 +no_defs" %\
-            #            (self.gridInfo['gridParameters']['projection']['lat_0'],
-            #            self.gridInfo['gridParameters']['projection']['lon_0'])
-
-            # Declare the xarray dataset open even though it is really only in memory at this point
-            self.xrOpen = True
-
-            # Compute grid metrics
-            self.computeGridMetrics()
-
+            newGridCreated = True
 
         # Make a grid in the Lambert Conformal Conic projection
         if self.gridInfo['gridParameters']['projection']['name'] == 'LambertConformalConic':
+            
+            # This projection only supports degrees at the moment
+            try:
+                unsupported = False
+                if self.gridInfo['gridParameters']['dxUnits'] == 'meters':
+                    unsupported = True
+                if self.gridInfo['gridParameters']['dyUnits'] == 'meters':
+                    unsupported = True
+                if unsupported:
+                    msg = 'ERROR: Lambert Conformal Conic grid parameters must be specified in degrees.'
+                    self.printMsg(msg, level=logging.ERROR)
+                    return
+            except:
+                # Default units are degrees
+                pass
+            
             # Sometimes tilt may not be specified, so use a default of 0.0
             if 'tilt' in self.gridInfo['gridParameters'].keys():
                 tilt = self.gridInfo['gridParameters']['tilt']
@@ -654,19 +695,29 @@ class GridUtils:
                 self.gridInfo['gridParameters']['projection']['lat_0'] - (self.gridInfo['gridParameters']['dy'] / 2.0)
             self.gridInfo['gridParameters']['projection']['lat_2'] =\
                 self.gridInfo['gridParameters']['projection']['lat_0'] + (self.gridInfo['gridParameters']['dy'] / 2.0)
-            #self.gridInfo['gridParameters']['projection']['proj'] =\
-            #        "+ellps=WGS84 +proj=lcc +lon_0=%s +lat_0=%s +x_0=0.0 +y_0=0.0 +lat_1=%s +lat_2=%s +no_defs" %\
-            #            (self.gridInfo['gridParameters']['projection']['lat_0'],
-            #            self.gridInfo['gridParameters']['projection']['lon_0'],
-            #            self.gridInfo['gridParameters']['projection']['lat_1'],
-            #            self.gridInfo['gridParameters']['projection']['lat_2'])
+            
+            newGridCreated = True
+
+        if newGridCreated:
+            # Generate a proj string
+            try:
+                projString = self.formProjString(self.gridInfo['gridParameters'])
+                if projString:
+                    self.gridInfo['gridParameters']['projection']['proj'] = projString
+                else:
+                    msg = "WARNING: Projection string could not be determined from grid parameters."
+                    self.printMsg(msg, level=logging.WARNING)
+            except:
+                msg = "WARNING: Projection string could not be determined from grid parameters."
+                self.printMsg(msg, level=logging.WARNING)
+                self.debugMsg('')            
 
             # Declare the xarray dataset open even though it is really only in memory at this point
             self.xrOpen = True
 
             # Compute grid metrics
             self.computeGridMetrics()
-
+                                
     # Original functions provided by Niki Zadeh - Lambert Conformal Conic grids
     # Grid creation and rotation in spherical coordinates
     def mesh_plot(self, lon, lat, lon0=0., lat0=90.):
@@ -804,8 +855,13 @@ class GridUtils:
 
     def generate_regional_spherical(self, lon0, lon_span, lat0, lat_span, tilt, gRes, gMode):
         """Generate a regional grid centered at (lon0,lat0) with spans of (lon_span,lat_span) and tilted by angle tilt"""
-        Ni = int(lon_span * gRes)
-        Nj = int(lat_span * gRes)
+        
+        Ni = int(lon_span / gRes)
+        Nj = int(lat_span / gRes)
+        if gMode == 2:
+            # Supergrid requested
+            Ni = Ni * 2
+            Nj = Nj * 2
 
         # Generate a mesh at equator centered at (lon0, 0)
         lam_,phi_ = self.generate_latlon_mesh_centered(Ni, Nj, lon0, lon_span, 0.0, lat_span)
@@ -820,8 +876,12 @@ class GridUtils:
 
     def generate_regional_mercator(self, lon0, lon_span, lat0, lat_span, tilt, gRes, gMode):
         """Generate a regional grid centered at (lon0, lat0) with spans of (lon_span, lat_span) and tilted by angle tilt"""
-        Ni = int(lon_span * gRes)
-        Nj = int(lat_span * gRes)
+        Ni = int(lon_span / gRes)
+        Nj = int(lat_span / gRes)
+        if gMode == 2:
+            # Supergrid requested
+            Ni = Ni * 2
+            Nj = Nj * 2
 
         # Generate a mesh centered at (lon0, lat0)
         lam_,phi_ = self.generate_latlon_mesh_centered(Ni, Nj, lon0, lon_span, lat0, lat_span)
@@ -964,12 +1024,12 @@ class GridUtils:
         # declare projection options - note that each projection uses a different
         # combination of these parameters and rarely all are used for one projection
         central_longitude = self.getPlotParameter('lon_0', subKey='projection', default=0.0)
-        central_latitude = self.getPlotParameter('lat_0', subKey='projection', default=39.0)
-        lat_1 = self.getPlotParameter('lat_1', subKey='projection', default=33.0)
-        lat_2 = self.getPlotParameter('lat_2', subKey='projection', default=45.0)
+        central_latitude = self.getPlotParameter('lat_0', subKey='projection', default=0.0)
+        lat_1 = self.getPlotParameter('lat_1', subKey='projection', default=0.0)
+        lat_2 = self.getPlotParameter('lat_2', subKey='projection', default=0.0)
         standard_parallels = (lat_1, lat_2)
-        satellite_height = self.getPlotParameter('satellite_height', default=35785831)
-        true_scale_latitude = self.getPlotParameter('lat_ts', subKey='projection', default=75.0)
+        satellite_height = self.getPlotParameter('satellite_height', default=35785831.0)
+        true_scale_latitude = self.getPlotParameter('lat_ts', subKey='projection', default=central_latitude)
 
         # declare varying crs based on plotProjection
         crs = None
@@ -1224,14 +1284,14 @@ class GridUtils:
         .. note::
             Plot parameters persist for as long as the python object exists.
 
-            See the user manual for more details.
+            See the user manual for additional details.
             
-                'figsize': tells matplotlib the figure size [width, height in inches (6.4, 4.8)]
+                'figsize': tells matplotlib the figure size [width, height in inches (5.0, 3.75)]
                 'extent': [x0, x1, y0, y1] map extent of given coordinate system (see extentCRS) [default is []]
                     If no extent is given, [], then set_global() is used. 
                     REF: https://scitools.org.uk/cartopy/docs/latest/matplotlib/geoaxes.html
                 'extentCRS': cartopy crs [cartopy.crs.PlateCarree()] 
-                    You must have the cartopy.crs module loaded to change the setting.
+                    You must have the cartopy.crs module loaded to change this setting.
                 'showGrid': show the grid outline [True(*)/False]
                 'showGridCells': show the grid cells [True/False(*)]
                 'showSupergrid': show the MOM6 supergrid cells [True/False(*)]
@@ -1240,16 +1300,13 @@ class GridUtils:
                 'jColor': matplotlib color for j vertices ['k'(*) black]
                 'iLinewidth': matplotlib linewidth for i vertices [points: 1.0(*)]
                 'jLinewidth': matplotlib linewidth for j vertices [points: 1.0(*)]
-                    For dense gridcells, you can try a very thin linewidth of 0.1.
 
                 SUBKEY: 'projection' (mostly follows proj.org terminology)
                     'name': Grid projection ['LambertConformalConic','Mercator','Stereographic']
                     'lat_0': Latitude of projection center [degrees, 0.0(*)]
                     'lat_1': First standard parallel (latitude) [degrees, 0.0(*)]
                     'lat_2': Second standard parallel (latitude) [degrees, 0.0(*)]
-                    'lat_ts': Latitude of true scale. Defines the latitude where scale is not distorted.
-                              Takes precedence over k_0 if both options are used together.
-                              For stereographic, if not set, will default to lat_0.
+                    'lat_ts': Latitude of true scale. 
                     'lon_0': Longitude of projection center [degrees, 0.0(*)]
                     'ellps': See proj -le for a list of available ellipsoids [GRS80(*)]
                     'R': Radius of the sphere given in meters.  If both R and ellps are given, R takes precedence.

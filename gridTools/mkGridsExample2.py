@@ -32,6 +32,8 @@ grd.printMsg("Lets change the debug level to 1 (MESSAGES) and the verbosity to D
 grd.printMsg("")
 grd.setDebugLevel(1)
 grd.setVerboseLevel(logging.DEBUG)
+# This should also work
+grd.setVerboseLevel("DEBUG")
 
 grd.printMsg("""Attempting to run: grd.setPlotParameters(testParameters, subKey='test')""")
 grd.setPlotParameters(testParameters, subKey='test')

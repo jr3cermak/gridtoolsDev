@@ -115,14 +115,29 @@ adjustment can be disabled.
 ## Projections
 
 The user may select from three available projections:
-  * Mercator
   * Lambert Conformal Conic
+  * Mercator
   * Stereographic
 
 Since `pyproj` is utilized by this library, the
 default ellipsoids for [projections](https://proj.org/operations/projections/index.html)
 is GRS80.  If `proj` is installed, use `proj -le` to produce a
 list of available ellipoids.
+
+## Projection Support
+
+### Lambert Conformal Conic
+
+All grid parameters must be specified in degrees.
+
+### Mercator
+
+All grid parameters must be specified in degrees.
+
+### Stereographic
+
+The central grid point must be specified in degrees.
+Grid distance must be specified in meters.
 
 # Defaults
 
@@ -201,7 +216,7 @@ NOTES:
  * **(1)** This is a reasonable float number representing degrees or meters.
  * **(2)** This feature has not been implemented yet.
  * **(3)** This parameter only applies to the Lambert Conformal Conic projection.
- * **(4)** Specifying gridResolutionX and/or gridResolutionY will override the value
+ * **(4)** Specifying gridResolutionX and/or gridResolutionY will override the value.
 specified for gridResolution
 
 MOM6 parameter definitions:
@@ -226,15 +241,98 @@ name | projection name | string | 'LambertConformalConic', 'Mercator', 'Stereogr
 lat\_0 | latitude of projection center | degrees | -90.0 to +90.0 | 0.0
 lat\_1 | first standard parallel latitude | degrees | -90.0 to +90.0 | 0.0
 lat\_2 | second standard parallel latitude | degrees | -90.0 to +90.0 | 0.0
-lat\_ts | latitude of true scale | degrees | -90.0 to +90.0 | 0.0
+lat\_ts | latitude of true scale | degrees | -90.0 to +90.0 | 0.0 **(1)**
 lon\_0 | longitude of projection center | degrees | +0.0 to +360.0 | 0.0
-ellps | ellipsoid | string | **(1)** | 'GRS80'
-R | radius of the earth sphere | float | **(2)** | n/a
-x\_0 | false easting | float | meters | 0.0
-y\_0 | false northing | float | meters | 0.0
-k\_0 | scale factor for natural origin or the ellipsoid | float | **(1)** | 1.0
+ellps | ellipsoid | string | **(2)** | 'GRS80'
+R | radius of the earth sphere | float | **(3)** | n/a
+x\_0 | false easting | float | always expressed in meters | 0.0
+y\_0 | false northing | float | always expressed in meters | 0.0
+k\_0 | scale factor for natural origin or the ellipsoid | float | **(2)** | 1.0
+
+NOTES:
+ * **(1)** This parameters take precedence over `k_0` if both options are specified.  For
+stereographic projections, `lat_0` is used if `lat_ts` is not specified.
+ * **(2)** This is a proj string that sets the ellipsoid of the earth or sphere.  See `proj -le`
+to show all available ellipoids.  Even if an ellipsoid is selected, the radius can be changed
+by also supplying the `R` argument.
+ * **(3)** The radius is normally defined by the ellipsoid.  Use this parameter if the radius
+of the sphere is slightly different.  Depending on the projection selected, the parameter `k_0`
+may scale the natural origin or the ellipsoid.
 
 ## Plot
+
+Plot parameters may be changed through the `setPlotParameters` function by
+passing a python dictionary.  The order of the parameters does not matter.
+The parameter names are case sensitive.
+
+```
+grd.setPlotParameters({
+	'figsize': (5.0, 3.75),
+	'extent': [-180.0, +180.0, -90.0, +90.0],
+	'showGrid': True,
+	'showGridCells': False,
+	'showSupergrid': False,
+	'title': 'Plot title',
+	'iColor': 'k',
+	'jColor': 'k',
+	'iLinewidth': 1.0,
+	'jLinewidth': 1.0,
+	'projection': {
+		'name': 'Mercator',
+		'lat_0': 0.0,
+		'lat_1': 0.0,
+		'lat_2': 0.0,
+		'lat_ts': 0.0,
+		'lon_0': 0.0,
+		'ellps': 'GRS80',
+		'R': 6378137.0,
+		'x_0': 0.0,
+		'y_0': 0.0,
+		'k_0': 1.0
+	}
+})
+
+Parameter definitions:
+
+Parameter | Definition | Type | Valid Values | Default
+--------- | ---------- | ---- | ------------ | -------
+figsize | default figure size for plots in inches | tuple | (float, float) | (5.0, 3.75) **(1)**
+extent | plot extent | list | [float, float, float, float] | n/a **(2)**
+extentCRS | plot extent projection | cartopy crs object | **(3)** | cartopy.crs.PlateCarree()
+showGrid | plots only show the grid edge | boolean | False, True | True **(4)**
+showGridCells | plots show grid cells | boolean | False, True | False **(4)**
+showSupergrid | plots show the supergrid | boolean | False, True | False **(4)**
+title | plot title | string | any string | n/a **(5)**
+iColor | i grid line color | string | **(6)** | 'k'
+jColor | j grid line color | string | **(6)** | 'k'
+iLinewidth | i grid line width | float | **(7)** | 1.0
+jLinewidth | j grid line width | float | **(7)** | 1.0
+
+NOTES:
+ * **(1)** The tuple arguments are (width, height) in inches.  This
+default figure size is optimized for use in the application portion
+of the library.  The library is designed to pass back a figure and
+axes matlab object for further customization before rendering. 
+ * **(2)** By default, this parameter is not set.  When this parameter
+is not set, a geographic map plot will default to a global extent. 
+The parameter list is [min x0, max x1, min y0, max y1] where x is
+typically longitude and y is latitude.  NOTE: The library pyproj
+utilizes longitudes +0.0 to +360.0.  The library cartopy utilizes
+longitudes -180.0 to +180.0.
+ * **(3)** See [cartopy.crs](https://scitools.org.uk/cartopy/docs/latest/crs/projections.html)
+for other projections and required units.  Changing the projection will
+require loading the cartopy library.  `import cartopy`
+ * **(4)** Not all grid model types will support `showSupergrid`.  If
+multiple parameters are set to True, the plot will show the denser of
+all the selections.
+ * **(5)** By default, the parameter is not set. When set, this is
+the title that is shown on the plot.
+ * **(6)** By default, grid lines are plotted as black ('k').  The
+library utilizes colors available in
+[matplotlib](https://matplotlib.org/stable/tutorials/colors/colors.html).
+ * **(7)** Grid line width is specified in points (1/72 of an inch).  A grid
+can sometimes be viewable at a witdh of 0.1 points.  The grid also
+becomes somewhat opaque.
 
 The projection definitions for plot parameters are
 the same as the grid parameters and will not be 

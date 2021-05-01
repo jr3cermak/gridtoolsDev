@@ -5,7 +5,7 @@
  - [ ] Version 0.1
    - [ ] Simple polar grid generation
    - [ ] Clean up documentation
-   - [ ] Generify examples
+   - [ ] Generify current examples
    - [ ] Test application and examples for LCC grid generation
    - [ ] Test application for examples regular Mercator grid generation
    - [ ] Test application for examples stereographic grid generation
@@ -43,7 +43,11 @@
      - [X] Update new lat_1 and lat_2 for application after makeGrid() is run
      - [ ] changing plot parameters lat_1 and lat_2 do not seem to impact the view
    - [ ] make Mercator grids; needs testing
-   -   [ ] issue a warning if tilt is non-zero
+     - [ ] issue a warning if tilt is non-zero
+     - [ ] Niki might have solved lat lon tilt?
+   - [ ] make Stereographic grids; needs testing
+     - [ ] using meters; no tilt; based on code from Raphael
+     - [ ] using degrees; with tilt; based on code from Niki
    - [ ] grid generation in other projections
    - [X] on saveGrid() convert lon [+0,+360] to [-180,+180]
    - [X] Unify ellipse radius (R) constants throughout code
@@ -51,7 +55,8 @@
      - [X] Allow user control
  - [ ] grid mask editor (land, etc)
  - [ ] integration of bathymetric sources and apply to grids
-       Niki: https://github.com/nikizadehgfdl/ocean_model_topog_generator
+   - [ ] https://github.com/nikizadehgfdl/ocean_model_topog_generator
+   - [ ] xesmf regridder
  - [X] add nbserverproxy/xgcm to conda software stacks; copied to binder environment.yml
  - [ ] Add option to use Alistair's numpypi package as a configurable option in toolsets
  - [ ] turn numpypi into a loadable package via pip
@@ -94,6 +99,7 @@
  - [ ] For now, the gridParameters are always in reference to a center point in a grid
    in the future, one may fix a side or point of the grid and grow out from that point
    instead of the center.
+ - [ ] x_0 and y_0 are hard coded to be zero offsets.  The user can modify these values.
  - [ ] Add testing harnesses.
    - [ ] pytest: This will allow testing of core code via command line and iterative methods.
    - [ ] selenium: Testing interactive methods may be harder.
@@ -112,3 +118,5 @@
  - [ ] application: enable user configurable plot and widget sizes (hardcoded in __init__)
  - [ ] Refactor any grid math into a gridmath library.  Any grid computation that can stand on its own
        should be moved into a separate gridmath library.  Think about any dask optimization.
+ - [ ] gridtools::makeGrid() will need a refactor to work with other grid types
+ - [ ] refactor expansion/clipping of grid points when fitting grid

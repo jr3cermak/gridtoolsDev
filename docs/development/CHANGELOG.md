@@ -1,5 +1,28 @@
 # Change Log
 
+# 2021-04-30
+
+ - API CHANGES
+   - gridResolution is now units based instead of scale based as Niki defined it in his notebook example.
+ - gridutils
+   - Enforce degrees as units for Mercator and Lambert Conformal Conic.
+   - TODO: Niki performs some clipping of points along the j direction.  This should be an expanded feature
+     to warn the user about grids with odd number of points in the i and j direction and offer an expansion
+     or clipping method.  For supercomputing, it is easier to decompose a grid with even amounts of
+     points.
+   - Plotting: follow proj convention, when lat_ts is missing, attempt to use lat_0.
+   - Plottind defaults: follow proj defaults.
+   - drop "+units" from Mercator proj string
+   - add lat_ts to Stereographic proj string if available
+   - fix proj string bug for Lambert Conformal Conic
+   - Allow users to set the verbose Level by name instead of by number
+   - makeGrid() refactoring: use a flag to track when a new grid is created and then compute
+     grid metrics after attempting to establish a proj string.  Creating a proj string too
+     early did not work for the delayed information from the Lambert Conformal Conic grid.  Now
+     we compute the proj string at the latest possible moment.  This would break the Spherical
+     grid generator for units in meters.  This routine will have to construct the proj string early.
+   - Build out of Spherical grid generator begins (not complete)
+
 # 2021-04-29
 
  - Unify user manual.  The user manual will hold the bulk of the operational details.  Application details
