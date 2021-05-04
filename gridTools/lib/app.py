@@ -21,8 +21,7 @@ pn.extension()
 class App:
 
     def __init__(self, grd=None):
-        # Locals
-        self.gridMade = False
+
         # Globals
         
         # This application has its own copy of GridTools() object
@@ -270,7 +269,7 @@ class App:
             msg = "Running make_plot(): done"     
             self.grd.printMsg(msg, logging.INFO)
         else:
-            if self.gridMade == False:
+            if self.grd.gridMade == False:
                 (figure, axes) = self.errorNoGridFigure()
                 msg = "Running make_plot(): plotting failure - unspecified grid."
                 self.grd.printMsg(msg, logging.ERROR)

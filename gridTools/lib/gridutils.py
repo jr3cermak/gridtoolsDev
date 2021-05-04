@@ -37,6 +37,8 @@ class GridUtils:
         self.msgBox = None
         # Private variables begin with a _
         # Grid parameters
+        # Locals
+        self.gridMade = False
         self.gridInfo = {}
         self.gridInfo['dimensions'] = {}
         self.gridInfo['gridParameters'] = {}
