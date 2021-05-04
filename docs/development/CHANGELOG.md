@@ -1,5 +1,17 @@
 # Change Log
 
+# 2021-05-04
+
+ - Still some rough edges to clean up.
+   - One more pass at the application and application documentation
+ - Application changes:
+   - Adjust projection parameters depending on selected projection in make_plot and make_grid
+   - allow projection center to be separate from grid center
+   - define more controls for plot and grid to match recent API changes to GridUtils
+   - Ellipsoid for grids and plotting set to WGS84
+   - Add a grid "Center" tab
+   - Expand ranges of dx, dy, gridResolutionX and gridResolutionY to also support meters
+
 # 2021-05-03
 
  - WARNING: This commit leaves the Application broken (temporarily).

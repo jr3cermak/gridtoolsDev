@@ -6,15 +6,20 @@
    - [X] Simple polar grid generation
    - [X] Clean up documentation
    - [X] Generify current examples
-   - [X] Test application and examples for LCC grid generation
-   - [X] Test application for examples regular Mercator grid generation
-   - [X] Test application for examples stereographic grid generation
+   - [X] Test examples for LCC grid generation
+   - [X] Test examples for regular Mercator grid generation
+   - [X] Test examples for stereographic grid generation
+   - [ ] Test application for LCC grid generation
+   - [ ] Test application for regular Mercator grid generation
+   - [ ] Test application for stereographic grid generation
    - [ ] Tackle critical TODO items
    - [ ] Publish initial commit to ESMG
    - [ ] Ensure mybinder.org works with the published github commit
  - [ ] Version 0.2
    - [ ] Estabish sphinx document generator and link to readthedocs
    - [ ] Allow import of ROMS grid for conversion to MOM6
+   - [ ] Enhanced grid/plot projection options
+   - [ ] Explore the extent problem for lon defined as +0,+360 vs -180,+180
  - [ ] Verison 0.x
    - [ ] Bathymetry and boundery condition support
    - [ ] Grid filling options (flooding)
@@ -104,6 +109,13 @@
  - [ ] For now, the gridParameters are always in reference to a center point in a grid
    in the future, one may fix a side or point of the grid and grow out from that point
    instead of the center.
+ - [ ] application
+   - [ ] enable user configurable plot and widget sizes (hardcoded in __init__)
+   - [ ] enable user to change ellipsoid, R, x_0 and y_0 grid and plot parameters
+   - [ ] plotting: adjust satellite_height, for now it is fixed to the default
+ - [ ] Develop a GridUtils() function
+   - [ ] Run `proj -le` and return the names or display the details
+   - [ ] Populates the ellps field for the application
  - [ ] x_0 and y_0 are hard coded to be zero offsets.  The user can modify these values.
  - [ ] Deploy use of self.gridMade (robTest:PR#1)
    - [ ] After success in makeGrid()
@@ -128,10 +140,10 @@
    - [X] Added proj string to netCDF file
    - [ ] Tri polar grid description
  - [ ] Work with generic non-mapping reference systems for use with some of the sample MOM6 problems
- - [ ] application: enable user configurable plot and widget sizes (hardcoded in __init__)
  - [ ] Refactor any grid math into a gridmath library.  Any grid computation that can stand on its own
-       should be moved into a separate gridmath library.  Think about any dask optimization.
+       should be moved into a separate gridmath library.
  - [ ] gridtools::makeGrid() will need a refactor to work with other grid types
  - [ ] refactor expansion/clipping of grid points when fitting grid
  - [ ] Add a notebook or two that demonstrates some of the esoteric API
        features of the library: help, debugging, etc.
+ - [ ] Dask optimizations

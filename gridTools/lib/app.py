@@ -73,10 +73,19 @@ class App:
         self.plotGridModesDescriptions = ['Grid Extent', 'Grid Cells', 'Supergrid Cells']
         self.plotGridModeDict = dict(zip(self.plotGridModesDescriptions, self.plotGridModes))
 
+        # Grid parameters
+        self.gridResolutionUnitNames = ['degrees', 'meters']
+        self.gridResolutionXUnitNames = ['degrees', 'meters']
+        self.gridResolutionYUnitNames = ['degrees', 'meters']
+        self.gridDxUnitNames = ['degrees', 'meters']
+        self.gridDyUnitNames = ['degrees', 'meters']
+
+        # Plot colors
         self.plotColors = ['b', 'c', 'g', 'k', 'm', 'r', 'y']
         self.plotColorsDescriptions = ['Blue', 'Cyan', 'Green', 'Black', 'Magenta', 'Red', 'Yellow']
         self.plotColorDict = dict(zip(self.plotColorsDescriptions, self.plotColors))
 
+        # Line types (future feature)
         self.plotLineStyles = ['solid', 'dotted', 'dashed', 'dashdot']
         self.plotLineStylesDescriptions = ['Solid', 'Dotted', 'Dashed', 'DashDot']
         self.plotLineStyleDict = dict(zip(self.plotLineStylesDescriptions, self.plotLineStyles))
@@ -179,39 +188,73 @@ class App:
     def make_grid(self, event):
         updateMessage = "No errors or warnings."
         msg = "Running make_grid()"
+        projectionName = self.projNamesGridTools[self.gridProjection.value]
         self.grd.printMsg(msg, logging.INFO)
         self.grd.clearGrid()
         self.grd.setGridParameters({
             'projection': {
-                'name': self.projNamesGridTools[self.gridProjection.value],
-                'lon_0': float(self.glon0.value),
-                'lat_0': float(self.glat0.value)
+                'name': projectionName,
+                'ellps': 'WGS84'
             },
+            'centerX': float(self.gridCenterX.value),
+            'centerY': float(self.gridCenterY.value),
+            'centerUnits': self.gridCenterUnits.value,
             'dx': int(self.dx.value),
             'dy': int(self.dy.value),
-            'dxUnits': 'degrees',
-            'dyUnits': 'degrees',    
-            'gridResolution': float(self.gridResolution.value),
-            'gridMode': float(self.gridMode.value),
+            'dxUnits': self.dxUnits.value,
+            'dyUnits': self.dyUnits.value,
+            'gridResolutionX': float(self.gridResolutionX.value),
+            'gridResolutionY': float(self.gridResolutionY.value),
+            'gridResolutionXUnits': self.gridResolutionXUnits.value,
+            'gridResolutionYUnits': self.gridResolutionYUnits.value,
+            'gridMode': int(self.gridMode.value),
+            'gridType': self.gridType.value,
             'tilt': float(self.gtilt.value)
         })
+
+        if projectionName == 'LambertConformalConic':
+            self.grd.setGridParameters({
+                'lon_0': float(self.glon0.value),
+                'lat_0': float(self.glat0.value),
+                'lat_1': float(self.glat1.value),
+                'lat_2': float(self.glat2.value)
+            }, subKey='projection')
+
+        if projectionName == 'Mercator':
+            self.grd.setGridParameters({
+                'lon_0': float(self.glon0.value)
+            }, subKey='projection')
+
+        if projectionName == 'Stereographic':
+            self.grd.setGridParameters({
+                'lon_0': float(self.glon0.value),
+                'lat_0': float(self.glat0.value),
+                'lat_ts': float(self.glatts.value),
+            }, subKey='projection')
+        
         self.grd.makeGrid()
 
-        # Update the plot if we updated the grid
-        self.plotWindow.object = self.make_plot()
+        #if self.grd.gridMade:
+        if hasattr(self.grd.grid, 'x'):
 
-        # Update grid info
-        self.updateDataView()
+            # Update the plot if we updated the grid
+            self.plotWindow.object = self.make_plot()
 
-        if self.projNamesGridTools[self.gridProjection.value] == 'LambertConformalConic':
-            # For this projection LCC sets lat_1 and lat_2 based on grid inputs.
-            updateMessage = "NOTICE: Grid first and second parallels (lat_1, lat_2) have been changed to (%s, %s)." %\
-                (self.grd.gridInfo['gridParameters']['projection']['lat_1'], self.grd.gridInfo['gridParameters']['projection']['lat_2'])
-            self.glat1.value = self.grd.gridInfo['gridParameters']['projection']['lat_1']
-            self.glat2.value = self.grd.gridInfo['gridParameters']['projection']['lat_2']
+            # Update grid info
+            self.updateDataView()
 
-        msg = "Make grid succeeded: %s" % (updateMessage)
-        self.grd.printMsg(msg, logging.INFO)
+            if self.projNamesGridTools[self.gridProjection.value] == 'LambertConformalConic':
+                # Grid generation for LCC sets lat_1 and lat_2 based on grid inputs.
+                updateMessage = "NOTICE: Grid first and second parallels (lat_1, lat_2) have been changed to (%s, %s)." %\
+                    (self.grd.gridInfo['gridParameters']['projection']['lat_1'], self.grd.gridInfo['gridParameters']['projection']['lat_2'])
+                self.glat1.value = self.grd.gridInfo['gridParameters']['projection']['lat_1']
+                self.glat2.value = self.grd.gridInfo['gridParameters']['projection']['lat_2']
+
+            msg = "Make grid succeeded: %s" % (updateMessage)
+            self.grd.printMsg(msg, logging.INFO)
+        else:
+            msg = "ERROR: Make grid failed."
+            self.grd.printMsg(msg, logging.ERROR)
 
         return
 
@@ -219,11 +262,12 @@ class App:
         msg = "Running make_plot()"
         self.grd.printMsg(msg, logging.INFO)
 
+        selectedProjection = self.plotProjection.value
+        projectionName = self.plotProjectionsDict[self.plotProjection.value]
+
         if self.plotTitle.value != "":
             mp_title = plotTitle.value
         else:
-            selectedProjection = self.plotProjection.value
-            projectionName = self.plotProjectionsDict[self.plotProjection.value]
             if self.gtilt.value < 0.0 or self.gtilt.value > 0.0:
                 mp_title = "%s: " % (selectedProjection) + str(self.dx.value) + "x" + str(self.dy.value) + " with " + str(self.gtilt.value) + " degree tilt"
             else:
@@ -251,7 +295,8 @@ class App:
             {
                 'figsize': self.defaultPlotFigureSize,
                 'projection' : {
-                    'name': projectionName
+                    'name': projectionName,
+                    'ellps': 'WGS84'
                 },
                 'extent': plotExtentState,
                 'iLinewidth': self.plotXLineWidth.value,
@@ -266,14 +311,34 @@ class App:
         # LambertConformalConic
         if projectionName == 'LambertConformalConic':
             self.grd.setPlotParameters({
-                'lat0':
-                
+                'lon_0': float(self.plon0.value),
+                'lat_0': float(self.plat0.value),
+                'lat_1': float(self.plat1.value),
+                'lat_2': float(self.plat2.value)
             }, subKey='projection')
+
         # NearsidePerspective
+        if projectionName == 'NearsidePerspective':
+            self.grd.setPlotParameters({
+                'lon_0': float(self.plon0.value),
+                'lat_0': float(self.plat0.value),
+                'satellite_height': 35785831.0,
+            }, subKey='projection')
+
         # Mercator
+        if projectionName == 'Mercator':
+            self.grd.setPlotParameters({
+                'lon_0': float(self.plon0.value)
+            }, subKey='projection')
+
         # Stereographic
-        
-        
+        if projectionName == 'Stereographic':
+            self.grd.setPlotParameters({
+                'lon_0': float(self.plon0.value),
+                'lat_0': float(self.plat0.value),
+                'lat_ts': float(self.platts.value)
+            }, subKey='projection')
+
         if self.grd.xrOpen:
             (figure, axes) = self.grd.plotGrid()
             msg = "Running make_plot(): done"     
@@ -448,23 +513,32 @@ class App:
         self.gridProjection = pn.widgets.Select(name='Projection', options=self.projNames, value=self.projNames[1])
         self.gridType = pn.widgets.Select(name="Grid Type", options=self.gridTypes, value=self.gridTypes[0])
         self.gridType.disabled = True
-        self.gridResolution = pn.widgets.Spinner(name="Grid Resolution", value=1.0, step=0.1, start=0.0, end=10.0, width=80)
+        self.gridResolutionX = pn.widgets.Spinner(name="Grid Resolution(X)", value=1.0, step=0.1, start=0.0, end=10000.0, width=80)
+        self.gridResolutionY = pn.widgets.Spinner(name="Grid Resolution(Y)", value=1.0, step=0.1, start=0.0, end=10000.0, width=80)
+        self.gridResolutionXUnits = pn.widgets.Select(name="Grid Resolution Units(X)", options=self.gridResolutionUnitNames, value=self.gridResolutionUnitNames[0])
+        self.gridResolutionYUnits = pn.widgets.Select(name="Grid Resolution Units(Y)", options=self.gridResolutionUnitNames, value=self.gridResolutionUnitNames[0])
         self.gridMode = pn.widgets.Spinner(name="Grid Mode", value=2, step=1, start=1, end=2, width=80)
         self.gridMode.disabled = True
         self.unitNames = ['degrees', 'meters']
-        self.dxdyUnits = pn.widgets.Select(name='Units', options=self.unitNames, value=self.unitNames[0])
-        self.dx = pn.widgets.Spinner(name="dx", value=20, step=1, start=0, end=100, width=100)
-        self.dy = pn.widgets.Spinner(name="dy", value=30, step=1, start=0, end=100, width=100)
+        self.dxUnits = pn.widgets.Select(name='dx Units', options=self.unitNames, value=self.unitNames[0])
+        self.dyUnits = pn.widgets.Select(name='dy Units', options=self.unitNames, value=self.unitNames[0])
+        self.dx = pn.widgets.Spinner(name="dx", value=20, step=1, start=0, end=10000000, width=100)
+        self.dy = pn.widgets.Spinner(name="dy", value=30, step=1, start=0, end=10000000, width=100)
         self.glon0 = pn.widgets.Spinner(name="Central Longitude(lon_0) (0 to 360)", value=230.0, step=1.0, start=0.0, end=360.0, width=100)
         self.glat0 = pn.widgets.Spinner(name="Central Latitude(lat_0) (-90 to 90)", value=40.0, step=1.0, start=-90.0, end=90.0, width=100)
         self.glat1 = pn.widgets.Spinner(name="First Parallel(lat_1) (-90 to 90)", value=40.0, step=1.0, start=-90.0, end=90.0, width=100)
         self.glat2 = pn.widgets.Spinner(name="Second Parallel(lat_2) (-90 to 90)", value=40.0, step=1.0, start=-90.0, end=90.0, width=100)
         self.glatts = pn.widgets.Spinner(name="Latitude of True Scale(lat_ts) (-90 to 90)", value=40.0, step=1.0, start=-90.0, end=90.0, width=100)
         self.gtilt = pn.widgets.Spinner(name="Tilt (-90 to 90)", value=30.0, step=0.1, start=-90.0, end=90.0, width=100)
+        self.gridCenterX = pn.widgets.Spinner(name='Grid center(X)', value=230.0, step=0.1, start=0.0, end=360.0, width=100)
+        self.gridCenterY = pn.widgets.Spinner(name='Grid center(Y)', value=40.0, step=0.1, start=0.0, end=90.0, width=100)
+        self.gridCenterUnits = pn.widgets.Select(name='Grid Center Units', options=self.unitNames, value=self.unitNames[0])
         self.gridControlUpdateButton = pn.widgets.Button(name='Make Grid', button_type='primary')
         self.gridControlUpdateButton.on_click(self.make_grid)
-        self.xGridControl = pn.widgets.Select(name='X grid mode', options=self.xGridModes, value=self.xGridModes[1])
-        self.yGridControl = pn.widgets.Select(name='Y grid mode', options=self.yGridModes, value=self.yGridModes[1])
+        self.xGridControl = pn.widgets.Select(name='Grid Mode(X)', options=self.xGridModes, value=self.xGridModes[1])
+        self.xGridControl.disabled = True
+        self.yGridControl = pn.widgets.Select(name='Grid Mode(Y)', options=self.yGridModes, value=self.yGridModes[1])
+        self.yGridControl.disabled = True
 
         # Plot Controls
         # Use Niki's defaults for rapid testing
@@ -607,13 +681,47 @@ class App:
         # Pull controls together
 
         # Plot controls
-        self.plotProjectionControls = pn.WidgetBox('# Plot Projection', self.plotProjection, self.plon0, self.plat0, self.plat1, self.plat2, self.platts, self.plotControlUpdateButton)
-        self.plotExtentControls = pn.WidgetBox('# Plot Extent', self.plotExtentX0, self.plotExtentX1, self.plotExtentY0, self.plotExtentY1, self.plotUseGlobal)
-        self.plotStyleControls = pn.WidgetBox('# Plot Style', self.plotTitle, self.plotGridMode, self.plotXColor, self.plotYColor, self.plotXLineWidth, self.plotYLineWidth)
+        self.plotProjectionControls = pn.WidgetBox('# Plot Projection',
+                                                   self.plotProjection,
+                                                   self.plon0,
+                                                   self.plat0,
+                                                   self.plat1,
+                                                   self.plat2,
+                                                   self.platts,
+                                                   self.plotControlUpdateButton)
+        self.plotExtentControls = pn.WidgetBox('# Plot Extent',
+                                               self.plotExtentX0,
+                                               self.plotExtentX1,
+                                               self.plotExtentY0,
+                                               self.plotExtentY1,
+                                               self.plotUseGlobal,
+                                               self.plotControlUpdateButton)
+        self.plotStyleControls = pn.WidgetBox('# Plot Style',
+                                              self.plotTitle,
+                                              self.plotGridMode,
+                                              self.plotXColor,
+                                              self.plotYColor,
+                                              self.plotXLineWidth,
+                                              self.plotYLineWidth,
+                                              self.plotControlUpdateButton)
 
         # Grid controls
+        self.gridCenterControls = pn.WidgetBox('# Grid Center',
+                                               self.gridCenterX,
+                                               self.gridCenterY,
+                                               self.gridCenterUnits,
+                                               self.gridControlUpdateButton)
         self.gridProjectionControls = pn.WidgetBox('# Grid Projection', self.gridProjection, self.glon0, self.glat0, self.glat1, self.glat2, self.glatts, self.gtilt, self.gridControlUpdateButton)
-        self.gridSpacingControls = pn.WidgetBox('# Grid Spacing', self.dx, self.dy, self.gridResolution, self.dxdyUnits, self.gridControlUpdateButton)
+        self.gridSpacingControls = pn.WidgetBox('# Grid Spacing',
+                                                self.dx,
+                                                self.dxUnits,
+                                                self.dy,
+                                                self.dyUnits,
+                                                self.gridResolutionX,
+                                                self.gridResolutionXUnits,
+                                                self.gridResolutionY,
+                                                self.gridResolutionYUnits,
+                                                self.gridControlUpdateButton)
         self.gridAdvancedControls = pn.WidgetBox(
             """
             See "Grids" Manual tab for details about these controls.
@@ -655,6 +763,7 @@ class App:
         #  Extent
         #  Style
         # Grid
+        #  Center
         #  Projection
         #  Spacing
         #  Advanced
@@ -677,6 +786,7 @@ class App:
 
         # Grid
         self.gridControlTabs.extend([
+            ('Center', self.gridCenterControls),
             ('Projection', self.gridProjectionControls),
             ('Spacing', self.gridSpacingControls),
             ('Advanced', self.gridAdvancedControls)

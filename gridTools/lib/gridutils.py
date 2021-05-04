@@ -29,7 +29,7 @@ class GridUtils:
         self._default_ellps = 'GRS80'
         self._default_availableGridTypes = ['MOM6']
         
-        # File pointer
+        # File pointers
         self.xrOpen = False
         self.xrDS = xr.Dataset()
         self.grid = self.xrDS
@@ -814,12 +814,27 @@ class GridUtils:
             else:
                 tilt = 0.0
 
-            lonGrid, latGrid = self.generate_regional_spherical(
-                self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
-                self.gridInfo['gridParameters']['projection']['lat_0'], self.gridInfo['gridParameters']['dy'],
-                tilt,
-                self.gridInfo['gridParameters']['gridResolution'], self.gridInfo['gridParameters']['gridMode']
-            )
+            #lonGrid, latGrid = self.generate_regional_spherical(
+            #    self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
+            #    self.gridInfo['gridParameters']['projection']['lat_0'], self.gridInfo['gridParameters']['dy'],
+            #    tilt,
+            #    self.gridInfo['gridParameters']['gridResolution'], self.gridInfo['gridParameters']['gridMode']
+            #)
+            
+            lonGrid, latGrid = self.generate_regional_spherical_degrees(
+                        centerUnits, centerX, centerY,
+                        dx, dxUnits,
+                        dy, dyUnits,
+                        tilt,
+                        gridResolutionX, gridResolutionXUnits,
+                        gridResolutionY, gridResolutionYUnits,
+                        self.gridInfo['gridParameters']['projection'],
+                        gridType=gridType,
+                        gridMode=gridMode,
+                        ensureEvenI=ensureEvenI,
+                        ensureEvenJ=ensureEvenJ
+                    )
+            
             # Adjust lonGrid to -180 to +180
             lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
 
