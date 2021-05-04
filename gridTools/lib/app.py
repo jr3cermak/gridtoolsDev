@@ -223,6 +223,7 @@ class App:
             mp_title = plotTitle.value
         else:
             selectedProjection = self.plotProjection.value
+            projectionName = self.plotProjectionsDict[self.plotProjection.value]
             if self.gtilt.value < 0.0 or self.gtilt.value > 0.0:
                 mp_title = "%s: " % (selectedProjection) + str(self.dx.value) + "x" + str(self.dy.value) + " with " + str(self.gtilt.value) + " degree tilt"
             else:
@@ -250,9 +251,7 @@ class App:
             {
                 'figsize': self.defaultPlotFigureSize,
                 'projection' : {
-                    'name': self.plotProjectionsDict[self.plotProjection.value],
-                    'lat_0': float(self.plat0.value),
-                    'lon_0': float(self.plon0.value)
+                    'name': projectionName
                 },
                 'extent': plotExtentState,
                 'iLinewidth': self.plotXLineWidth.value,
@@ -263,6 +262,18 @@ class App:
                 'jColor': self.plotColorDict[self.plotYColor.value]
             }
         )
+        
+        # LambertConformalConic
+        if projectionName == 'LambertConformalConic':
+            self.grd.setPlotParameters({
+                'lat0':
+                
+            }, subKey='projection')
+        # NearsidePerspective
+        # Mercator
+        # Stereographic
+        
+        
         if self.grd.xrOpen:
             (figure, axes) = self.grd.plotGrid()
             msg = "Running make_plot(): done"     

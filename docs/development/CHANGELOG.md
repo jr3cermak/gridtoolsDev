@@ -1,5 +1,33 @@
 # Change Log
 
+# 2021-05-03
+
+ - WARNING: This commit leaves the Application broken (temporarily).
+ - API CHANGES
+   - Created grid generation function for spherical units given in meters and degrees.
+ - Add warning when grid generation fails.
+ - Add informational message when grid metrics are not computed.
+ - Check for lat_0 of +90 or -90 for spherical projection plots.
+ - Example mkGridsExample4.ipynb complete
+ - Checked operation of mkGridsExample1.py
+ - Checked operation of mkGridsExample5.py and mkGridsExample5a.py
+ - Issue a warning for grids that might not be conformal.
+ - Update app:make_plot for various projection inputs
+ - Remove an unneeded string expansion for Mercator.
+
+# 2021-05-02
+
+ - API CHANGES
+   - Performing parameter checks upfront and converting some to float for use later.
+   - Update mercator with Niki's routine to allow users to specify tilt.
+   - Define _default_availableGridTypes
+   - Add ensureEvenI flag for MOM6 grids
+ - Whitespace cleanup
+ - Begin to leverage args and kwargs in python functions.  This will allow us to
+   use developed math functions for use with other grid types that might require
+   different options.
+ - Adding code guards for MOM6 specific operations.
+
 # 2021-05-01
 
  - Move generic API demonstrations into mkGridsExample2.py so it

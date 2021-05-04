@@ -28,8 +28,8 @@ grd.printMsg("At this point, we have initialized a GridUtils() object.")
 grd.printMsg("")
 
 # We can turn on extra output from the module
-grd.printMsg("We set print and logging messages to the DEBUG level.")
-logFilename = 'configs/test/nikiTest.log'
+grd.printMsg("Set print and logging messages to the DEBUG level.")
+logFilename = 'configs/test/LCC_20x30.log'
 grd.setVerboseLevel(logging.DEBUG)
 grd.setDebugLevel(0)
 grd.setLogLevel(logging.DEBUG)
@@ -50,13 +50,19 @@ grd.setGridParameters({
         'lon_0': 230.0,
         'lat_0': 40.0
     },
+    'centerX': 230.0,
+    'centerY': 40.0,
+    'centerUnits': 'degrees',
     'dx': 20.0,
     'dxUnits': 'degrees',
     'dy': 30.0,
     'dyUnits': 'degrees',
     'tilt': gtilt,
     'gridResolution': 1.0,
-    'gridMode': 2.0
+    'gridMode': 2,
+    'gridType': 'MOM6',
+    'ensureEvenI': True,
+    'ensureEvenJ': True
 })
 grd.showGridParameters()
 grd.printMsg("")
@@ -70,12 +76,12 @@ grd.printMsg("")
 #}, subKey='projection')
 
 # This forms a grid in memory using the specified grid parameters
-grd.printMsg("We make a grid with the grid parameters.")
+grd.printMsg("Make a grid with the grid parameters.")
 grd.makeGrid()
 
 # Save the new grid to a netCDF file
-grd.printMsg("We attempt to save the grid to a netCDF file.")
-grd.saveGrid(filename="configs/test/nikiTest.nc")
+grd.printMsg("Attempt to save the grid to a netCDF file.")
+grd.saveGrid(filename="configs/test/LCC_20x30_script.nc")
 
 # This prints out all the current grid parameters
 # Note: for Lambert Conformal Conic grids, two additional projection parameters are computed.
@@ -94,7 +100,7 @@ grd.printMsg("%s" % (grd.grid))
 grd.printMsg("")
 
 # Define plot parameters so we can see what the grid looks like
-grd.printMsg("We now setup plotting parameters for showing the grid on a map:")
+grd.printMsg("Setup plotting parameters for showing the grid on a map:")
 grd.setPlotParameters(
     {
         'figsize': (8,8),
@@ -131,7 +137,7 @@ grd.setPlotParameters(
 #   titles, axis, etc prior to the final plotting of the figure.
 #   Some items may be configured via the figure object.
 grd.printMsg('''
-We place a call to actually plot the grid using plotGrid().  This function returns
+Place a call to actually plot the grid using plotGrid().  This function returns
 a figure and axes object that can be further modified before displaying or saving
 the plot.
 
@@ -140,10 +146,10 @@ the plot.
 
 # You can save the figure using the savefig() method on the
 # figure object.  Many formats are possible.
-grd.printMsg("We save the figure in two different formats: jpg and pdf.")
-figure.savefig('configs/test/nikiTest.jpg', dpi=None, facecolor='w', edgecolor='w',
+grd.printMsg("Save the figure in two different formats: jpg and pdf.")
+figure.savefig('configs/test/LCC_20x30_script.jpg', dpi=None, facecolor='w', edgecolor='w',
         orientation='portrait', transparent=False, bbox_inches=None, pad_inches=0.1)
 
-figure.savefig('configs/test/nikiTest.pdf', dpi=None, facecolor='w', edgecolor='w',
+figure.savefig('configs/test/LCC_20x30_script.pdf', dpi=None, facecolor='w', edgecolor='w',
         orientation='portrait', transparent=False, bbox_inches=None, pad_inches=0.1)
 

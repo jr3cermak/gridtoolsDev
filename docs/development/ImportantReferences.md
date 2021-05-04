@@ -23,8 +23,13 @@ These are people, references and bookmarks that provided useful information to m
    https://nsidc.org/support/42415620-Mapx-Map-Transformations-Library
 
 ## Bookmarks
+ * https://www.digitalocean.com/community/tutorials/how-to-use-args-and-kwargs-in-python-3
  * https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+ * https://en.wikipedia.org/wiki/Arakawa_grids
  * https://en.wikipedia.org/wiki/World_Geodetic_System
+ * https://geohackweek.github.io/nDarrays/09-masking/
+ * https://github.com/binder-examples/conda
+ * https://github.com/SciTools/cartopy/issues/787
  * https://math.libretexts.org/Bookshelves/Calculus/Book%3A_Calculus_(OpenStax)/12%3A_Vectors_in_Space/12.7%3A_Cylindrical_and_Spherical_Coordinates#:~:text=In%20the%20Cartesian%20coordinate%20system%2C%20the%20location%20of%20a%20point,an%20angle%20measure%20(%CE%B8).
  * http://mathworld.wolfram.com
  * https://matplotlib.org/stable/gallery/images_contours_and_fields/image_masked.html
@@ -33,9 +38,7 @@ These are people, references and bookmarks that provided useful information to m
  * https://matplotlib.org/stable/tutorials/colors/colormaps.html
  * https://matplotlib.org/stable/tutorials/colors/colorbar_only.html#sphx-glr-tutorials-colors-colorbar-only-py
  * https://panel.holoviz.org/gallery/index.html
- * https://geohackweek.github.io/nDarrays/09-masking/
- * https://github.com/binder-examples/conda
- * https://github.com/SciTools/cartopy/issues/787
+
  * https://pangeo-xesmf.readthedocs.io/en/latest/notebooks/Compare_algorithms.html
  * https://rabernat.github.io/research_computing/xarray.html
  * https://rabernat.github.io/research_computing_2018/maps-with-cartopy.html
@@ -54,6 +57,7 @@ These are people, references and bookmarks that provided useful information to m
  * https://towardsdatascience.com/plt-subplot-or-plt-subplots-understanding-state-based-vs-object-oriented-programming-in-pyplot-4ba0c7283f5d
  * https://unidata.github.io/MetPy/latest/examples/Four_Panel_Map.html
  * https://www.kite.com/python/answers/how-to-hide-a-figure-from-being-shown-in-matplotlib-in-python
+ * https://www.mathsisfun.com/geometry/interior-angles-polygons.html
  * https://www.python.org/dev/peps/pep-0008/#package-and-module-names
  * https://xarray.pydata.org/en/stable/examples/ROMS_ocean_model.html
  * https://xarray.pydata.org/en/stable/data-structures.html#dictionary-like-methods
@@ -64,3 +68,4 @@ These are people, references and bookmarks that provided useful information to m
 ## For Review Later
 
  * http://dsrs.atmos.umd.edu/DATA/aosc/greenland/code/MOM4SODA/MOM_TEST/src/tools/make_hgrid/make_hgrid.c
+   * Be aware, this may be Arakawa B grid code

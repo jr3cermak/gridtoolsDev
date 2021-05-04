@@ -233,6 +233,7 @@ MOM6 parameter definitions:
 Parameter | Definition | Type | Valid Values | Default
 --------- | ---------- | ---- | ------------ | -------
 gridMode | grid generation mode | integer | **(1)** | 2
+ensureEvenI | ensure even number of grid points in the i direction | boolean | True, False | True
 ensureEvenJ | ensure even number of grid points in the j direction | boolean | True, False | True
 
 NOTES:

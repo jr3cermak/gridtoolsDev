@@ -49,12 +49,14 @@ grd.clearGrid()
 # Define IBCAO grid for gridtools library
 grd.setGridParameters({
     'projection': {
-        'name': "NorthPolarStereo",
+        'name': "Stereographic",
         'ellps': "WGS84",
         'R': 6378000.0,
         'lon_0': 0.0,
         'lat_0': 90.0,
         'lat_ts': 75.0,
+        'dx': 5000.0,
+        'dy': 5000.0,
         'dxUnits': 'meters',
         'dxUnits': 'meters'
     }
@@ -66,16 +68,17 @@ grd.setPlotParameters(
     {
         'figsize': (8,8),
         'projection': {
-            'name': 'NorthPolarStereo',
-            'lon_0': 0.0
+            'name': 'Stereographic',
+            'lon_0': 0.0,
+            'lat_0': 90.0
         },
         'extent': [-180, 180, 60, 90],
-        'iLinewidth': 0.1,
-        'jLinewidth': 0.1,
+        'iLinewidth': 1.0,
+        'jLinewidth': 1.0,
         'showGrid': True,
-        'title': 'North Polar Stereo: IBCAO',
-        'iColor': 'r',
-        'jColor': 'b'
+        'title': 'Stereographic: IBCAO',
+        'iColor': 'k',
+        'jColor': 'k'
     }
 )
 

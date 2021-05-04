@@ -3,12 +3,12 @@
 ## Milestones
 
  - [ ] Version 0.1
-   - [ ] Simple polar grid generation
-   - [ ] Clean up documentation
-   - [ ] Generify current examples
-   - [ ] Test application and examples for LCC grid generation
-   - [ ] Test application for examples regular Mercator grid generation
-   - [ ] Test application for examples stereographic grid generation
+   - [X] Simple polar grid generation
+   - [X] Clean up documentation
+   - [X] Generify current examples
+   - [X] Test application and examples for LCC grid generation
+   - [X] Test application for examples regular Mercator grid generation
+   - [X] Test application for examples stereographic grid generation
    - [ ] Tackle critical TODO items
    - [ ] Publish initial commit to ESMG
    - [ ] Ensure mybinder.org works with the published github commit
@@ -29,27 +29,30 @@
 # TASKS
 
  - [ ] general documentation
-   - [ ] grid parameters
-   - [ ] plot parameters
+   - [X] grid parameters
+   - [X] plot parameters
    - [ ] enable sphinx as the documentation generator
    - [ ] link to readthedocs
  - [ ] grid creation/editor
    - [ ] grid metrics
      - [X] Spherical solution is complete via Niki's ROMS to MOM6 converter
      - [X] Mercator (angle_dx might be 0 as it is lined up along latitude lines; except for tilt?)
-     - [ ] Polar
+     - [X] Polar
    - [ ] make Lambert Conformal Conic Grids; needs testing
      - [ ] LCC cannot take custom lat_1 and lat_2; it generates lat_1 and lat_2 based on grid inputs
      - [X] Update new lat_1 and lat_2 for application after makeGrid() is run
      - [ ] changing plot parameters lat_1 and lat_2 do not seem to impact the view
    - [ ] make Mercator grids; needs testing
-     - [ ] issue a warning if tilt is non-zero
+     - [ ] issue a warning if tilt is non-zero - disabled
      - [ ] Niki might have solved lat lon tilt?
-   - [ ] make Stereographic grids; needs testing
-     - [ ] using meters; no tilt; based on code from Raphael
-     - [ ] using degrees; with tilt; based on code from Niki
-   - [ ] grid generation in other projections
+     - [ ] having tilt may not produce conformal grids
+     - [X] Niki's example added; but it may not be correct
+   - [X] make Stereographic grids; needs testing
+     - [X] using meters; no tilt; based on code from Raphael
+     - [X] using degrees; with tilt; based on code from Niki; may not be correct
+   - [ ] grid generation in other projections (tri-polar, etc)
    - [X] on saveGrid() convert lon [+0,+360] to [-180,+180]
+     - [ ] Unify code that adjusts lon (robTest:PR#1)
    - [X] Unify ellipse radius (R) constants throughout code
      - [X] Gridutils initializes with proj GRS80
      - [X] Allow user control
@@ -74,6 +77,8 @@
  - [ ] Using xesmf regridder and other tools to create bathymetry and other forcing and boundary files
  - [ ] Develop a field "flood" routine similar to pyroms
  - [ ] create a setup.py to allow this library to be installable via pip
+ - [ ] Perform checks for ensureEvenI and ensureEvenJ everywhere.  This applies only to the grid not
+       the supergrid.
 
 # TODO
 
@@ -86,9 +91,9 @@
  - [ ] Add "Refresh Plot" buttons to other Plot tabs or figure out how to squeeze a single plot button into the layout
  - [ ] Do we have to declare everything in __init__ first or can be push all that to respective reset/clear functions?
  - [ ] refactor messaging/logging out of GridUtils into its own package so we can import printMsg/debugMsg as standalone calls
- - [ ] refactor refineS and refineR options as Niki had them defined
- - [ ] makeGrid assumes working in degrees
- - [ ] Allow library to work in degree or meters
+ - [X] refactor refineS and refineR options as Niki had them defined
+ - [X] makeGrid assumes working in degrees
+ - [X] Allow library to work in degree or meters
  - [X] Pass back an error graphic instead of None for figures that do not render
  - [ ] Add a formal logging/message mechanism.
    - [X] Allow display of important messages and warnings in panel application: widget=TextAreaInput
@@ -100,12 +105,20 @@
    in the future, one may fix a side or point of the grid and grow out from that point
    instead of the center.
  - [ ] x_0 and y_0 are hard coded to be zero offsets.  The user can modify these values.
+ - [ ] Deploy use of self.gridMade (robTest:PR#1)
+   - [ ] After success in makeGrid()
+   - [ ] Successful load of grid from a file
+   - [ ] Reset appropriately when clearGrid() is called
+ - [ ] More contemplation of longitude range with respect 0, +/-180, 360.
+   - [ ] How does this library respond for grids draped over 0 degree longitude vs +/-180 degrees longitude
  - [ ] Add testing harnesses.
    - [ ] pytest: This will allow testing of core code via command line and iterative methods.
    - [ ] selenium: Testing interactive methods may be harder.
 
 # WISH
 
+ - [ ] Compute angle_dy for testing of grid conformality.  Theoretically, we can do this check for all grid
+       and supergrid cells.
  - [ ] tripolar grids: use FRE-NCtools via cython?
  - [ ] Bring in code that converts ROMS grids to MOM6 grids
    - [ ] Allow conversion of MOM6 grids to ROMS grids

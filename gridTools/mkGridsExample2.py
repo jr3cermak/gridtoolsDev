@@ -24,11 +24,11 @@ info.show(vList=['platform','python','esmf','esmpy','xgcm','xesmf',
                  'dask'])
 grd.printMsg("---")
 
-grd.printMsg("This demonstrates how to access the internal help messages from the GridUtils()")
-grd.printMsg("library.  You may need to exit the help page by pressing the q key.")
+#grd.printMsg("This demonstrates how to access the internal help messages from the GridUtils()")
+#grd.printMsg("library.  You may need to exit the help page by pressing the q key.")
 # Help (module)
-print(help(GridUtils))
-grd.printMsg("")
+#print(help(GridUtils))
+#grd.printMsg("")
 
 # Without debugging, a failed assigment to a plot parameter subkey will result in
 # a message and the program will continue running.  We can easily cause a problem

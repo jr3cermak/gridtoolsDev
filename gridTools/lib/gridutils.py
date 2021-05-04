@@ -3,7 +3,7 @@ import os, sys, datetime, logging
 import cartopy, warnings, pdb
 import numpy as np
 import xarray as xr
-from pyproj import CRS
+from pyproj import CRS, Transformer
 
 # Needed for panel.pane                
 from matplotlib.figure import Figure
@@ -27,6 +27,7 @@ class GridUtils:
         # Adopt GRS80 ellipse from proj
         self._default_Re = 6.378137e6
         self._default_ellps = 'GRS80'
+        self._default_availableGridTypes = ['MOM6']
         
         # File pointer
         self.xrOpen = False
@@ -51,11 +52,11 @@ class GridUtils:
             'showGrid': True,
             'showGridCells': False,
             'showSupergrid': False
-        }          
+        }
         # Plot parameters
         self.gridInfo['plotParameters'] = self.plotParameterDefaults
         self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
-        
+
         # Messages
         # Logging and Verbosity Levels
         # CRITICAL:50; ERROR:40; WARNING:30; INFO:20, DEBUG:10, NOTSET:0
@@ -91,13 +92,13 @@ class GridUtils:
 
     def application(self, app={}):
         '''Convienence function to attach application items to GridUtil so it can update certain portions of the application.
-        
+
             app = {
                 'messages': panel.widget.TextBox     # Generally a pointer to a panel widget for display of text
                 'defaultFigureSize': (8,6)           # Default figure size to return from matplotlib
                 'usePaneMatplotlib': True/False      # Instructs GridUtils to use panel.pane.Matplotlib for plot objects 
             }
-        
+
         '''
         # Setup links to panel, etc
         appKeys = app.keys()
@@ -325,7 +326,7 @@ class GridUtils:
         :type newLevel: integer
         :return: none
         :rtype: none
-        
+
         .. note::
             Areas of code that typically cause errors have try/except blocks.  Some of these
             have python debugging breakpoints that are active when the debug level is set
@@ -339,7 +340,7 @@ class GridUtils:
         '''
         self.printMsg("New DEBUG level (%d)" % (newLevel))
         self.debugLevel = newLevel
-    
+
     def setLogLevel(self, newLevel):
         '''Set a new logging level.
 
@@ -347,7 +348,7 @@ class GridUtils:
         :type newLevel: integer or string
         :return: none
         :rtype: none
-        
+
         .. note::
             Setting this to a positive number will increase the feedback from this
             module.
@@ -373,7 +374,7 @@ class GridUtils:
         # Also update the logger, if active
         if self.msgLogger:
             self.logHandle.setLevel(newLevel)
-    
+
     def setVerboseLevel(self, newLevel):
         '''Set a new verbose level.
 
@@ -402,19 +403,19 @@ class GridUtils:
                 newLevel = logging.INFO
                 
         self.verboseLevel = newLevel
-    
+
     # Grid operations
-    
+
     def clearGrid(self):
         '''Call this when you want to erase the current grid.  This also
         clobbers any current grid and plot parameters.
         Do not call this method between plots of the same grid in different
         projections.'''
-        
+
         # If there are file resources open, close them first.
         if self.xrOpen:
             self.closeDataset()
-        
+
         self.xrFilename = None
         self.xrDS = xr.Dataset()
         self.grid = self.xrDS
@@ -422,7 +423,7 @@ class GridUtils:
         self.gridInfo['dimensions'] = {}
         self.clearGridParameters()
         self.resetPlotParameters()
-        
+
     def computeGridMetrics(self):
         '''Compute MOM6 grid metrics: angle_dx, dx, dy and area.'''
 
@@ -450,16 +451,16 @@ class GridUtils:
         # Make a copy of the lon grid as values are changed for computation
         lon = self.grid.x.copy()
         lat = self.grid.y
-        
+
         # Approximate edge lengths as great arcs
         self.grid['dx'] = (('nyp', 'nx'),  R * spherical.angle_through_center( (lat[ :,1:],lon[ :,1:]), (lat[:  ,:-1],lon[:  ,:-1]) ))
         self.grid.dx.attrs['units'] = 'meters'
         self.grid['dy'] = (('ny' , 'nxp'), R * spherical.angle_through_center( (lat[1:, :],lon[1:, :]), (lat[:-1,:  ],lon[:-1,:  ]) ))
         self.grid.dy.attrs['units'] = 'meters'
-        
+
         # Scaling by latitude?
         cos_lat = np.cos(np.radians(lat))
-        
+
         # Presize the angle_dx array
         angle_dx = np.zeros(lat.shape)
         # Fix lon so they are 0 to 360 for computation of angle_dx
@@ -469,7 +470,7 @@ class GridUtils:
         angle_dx[:,-1  ] = np.arctan2( (lat[:,-1] - lat[:,-2 ]) , ((lon[:,-1] - lon[:,-2 ]) * cos_lat[:,-1  ]) )
         self.grid['angle_dx'] = (('nyp', 'nxp'), angle_dx)
         self.grid.angle_dx.attrs['units'] = 'radians'
-        
+
         self.grid['area'] = (('ny','nx'), R * R * spherical.quad_area(lat, lon))
         self.grid.area.attrs['units'] = 'meters^2'
 
@@ -483,7 +484,7 @@ class GridUtils:
         if 'projection' in param:
             if 'name' in param['projection']:
                 if param['projection']['name'] == 'Mercator':
-                    projString = "+proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 %s +no_defs" %\
+                    projString = "+proj=merc +lon_0=%s +x_0=0.0 +y_0=0.0 +no_defs" %\
                         (param['projection']['lon_0'])
 
                 if param['projection']['name'] in ['NorthPolarStereo', 'SouthPolarStereo', 'Stereographic']:
@@ -521,67 +522,154 @@ class GridUtils:
             self.debugMsg(msg)
 
         return projString
-   
+
     def makeGrid(self):
         '''Using supplied grid parameters, populate a grid in memory.'''
 
         # New grid created flag
         newGridCreated = False
 
+        # PRESCREEN PARAMETERS
+
+        # Review grid type
+        gridType = self.getGridParameter('gridType', default='MOM6')
+        if not(gridType in self._default_availableGridTypes):
+            msg = 'ERROR: Grid type (%s) not supported.' % (gridType)
+            self.printMsg(msg, level=logging.ERROR)
+            return
+
+        # MOM6 specific arguments
+        gridMode = None
+        ensureEvenI = None
+        ensureEvenJ = None
+        if gridType == 'MOM6':
+            gridMode = self.getGridParameter('gridMode', default='2')
+            gridMode = int(gridMode)
+
+            ensureEvenI = self.getGridParameter('ensureEvenI', default=True)
+            ensureEvenJ = self.getGridParameter('ensureEvenJ', default=True)
+
+        # All grids must have centerX, centerY and centerUnits defined.
+        centerX = self.getGridParameter('centerX', default='Error')
+        centerY = self.getGridParameter('centerY', default='Error')
+        centerUnits = self.getGridParameter('centerUnits', default='degrees')
+
+        if centerX == 'Error' or centerY == 'Error':
+            msg = 'ERROR: Grid parameter centerX or centerY missing.  These must be specified.'
+            self.printMsg(msg, level=logging.ERROR)
+            return
+
+        centerX = float(centerX)
+        centerY = float(centerY)
+
+        if centerUnits == 'degrees':
+            if centerX < 0.0 or centerX > 360.0:
+                msg = 'ERROR: Grid parameter centerX must be +0.0 to +360.0.'
+                self.printMsg(msg, level=logging.ERROR)
+                return
+            if centerY < -90.0 or centerY > 90.0:
+                msg = 'ERROR: Grid parameter centerY must be -90.0 to +90.0.'
+                self.printMsg(msg, level=logging.ERROR)
+                return
+
+        # Review dx and dy: these must be set
+        dx = self.getGridParameter('dx', default='Error')
+        dy = self.getGridParameter('dy', default='Error')
+        if dx == 'Error' or dy == 'Error':
+            msg = 'ERROR: Size of grid dx and dy must be defined.'
+            self.printMsg(msg, level=logging.ERROR)
+            return
+        dx = float(dx)
+        dy = float(dy)
+
+        # Review the dxUnits and dyUnits parameters
+        dxUnits = self.getGridParameter('dxUnits', default='degrees')
+        dyUnits = self.getGridParameter('dyUnits', default='degrees')
+
+        # Review gridResolution, gridResolutionX and gridResolutionY,
+        #    gridResolutionUnits, gridResolutionXUnits and gridResolutionY
+        # parameters
+        gridResolution = self.getGridParameter('gridResolution', default='Error')
+        gridResolutionX = self.getGridParameter('gridResolutionX', default='Error')
+        gridResolutionY = self.getGridParameter('gridResolutionY', default='Error')
+        gridResolutionUnits = self.getGridParameter('gridResolutionUnits', default='degrees')
+        gridResolutionXUnits = self.getGridParameter('gridResolutionXUnits', default='degrees')
+        gridResolutionYUnits = self.getGridParameter('gridResolutionYUnits', default='degrees')
+
+        # Review tilt parameter
+        tilt = float(self.getGridParameter('tilt', default="0.0"))
+
+        # If gridResolution is not set, gridResolutionX and gridResolutionY must be set.  At
+        # the end, gridResolutionX and gridResolutionY must have values either set from
+        # their values or gridResolution.
+        if gridResolution == 'Error':
+            if gridResolutionX == 'Error' or gridResolutionY == 'Error':
+                msg = 'ERROR: Grid parameter gridResolution or (gridResolutionX and gridResolutionY) must be set.'
+                self.printMsg(msg, level=logging.ERROR)
+                return
+        else:
+            if gridResolutionX == 'Error':
+                gridResolutionX = float(gridResolution)
+                gridResolutionXUnits = gridResolutionUnits
+            else:
+                gridResolutionX = float(gridResolutionX)
+            if gridResolutionY == 'Error':
+                gridResolutionY = float(gridResolution)
+                gridResolutionYUnits = gridResolutionUnits
+            else:
+                gridResolutionY = float(gridResolutionY)
+
+        # GRID GENERATION ROUTINES
+
         # Make a grid in the Mercator projection
         if self.gridInfo['gridParameters']['projection']['name'] == "Mercator":
 
-            # This projection only supports degrees
-            try:
+            if gridType == 'MOM6':
+                # This projection only supports degrees
                 unsupported = False
-                if self.gridInfo['gridParameters']['dxUnits'] == 'meters':
+                if dxUnits == 'meters':
                     unsupported = True
-                if self.gridInfo['gridParameters']['dyUnits'] == 'meters':
+                if dyUnits == 'meters':
                     unsupported = True
                 if unsupported:
                     msg = 'ERROR: Mercator grid parameters must be specified in degrees.'
                     self.printMsg(msg, level=logging.ERROR)
                     return
-            except:
-                # Default units are degrees
-                pass
 
-            if 'tilt' in self.gridInfo['gridParameters'].keys():
-                tilt = self.gridInfo['gridParameters']['tilt']
-            else:
-                tilt = 0.0
+                # Tilt may not produce conformal Mercator
+                if tilt > 0.0 or tilt < 0.0:
+                    msg = "WARNING: Tilt of a mercator grid may not be conformal."
+                    self.printMsg(msg, level=logging.WARNING)
 
-            # Tilt is not available for Mercator
-            if tilt > 0.0 or tilt < 0.0:
-                tilt = 0.0
-                msg = "WARNING: Tilt of a mercator grid is not supported.  Specified tilt has been ignored."
-                self.printMsg(msg, level=logging.WARNING)
+                lonGrid, latGrid = self.generate_regional_mercator(
+                    centerUnits, centerX, centerY,
+                    dx, dxUnits,
+                    dy, dyUnits,
+                    tilt,
+                    gridResolutionX, gridResolutionXUnits,
+                    gridResolutionY, gridResolutionYUnits,
+                    self.gridInfo['gridParameters']['projection'],
+                    gridType=gridType,
+                    gridMode=gridMode,
+                    ensureEvenI=ensureEvenI,
+                    ensureEvenJ=ensureEvenJ
+                )
 
-            lonGrid, latGrid = self.generate_regional_mercator(
-                self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
-                self.gridInfo['gridParameters']['projection']['lat_0'],
-                self.gridInfo['gridParameters']['dy'],
-                tilt,
-                self.gridInfo['gridParameters']['gridResolution'], self.gridInfo['gridParameters']['gridMode']
-            )
-              
-            # Adjust lonGrid to -180 to +180
-            lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
+                if hasattr(lonGrid, 'shape'):
+                    # Adjust lonGrid to -180 to +180
+                    lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
 
-            (nxp, nyp) = lonGrid.shape
+                    (nxp, nyp) = lonGrid.shape
 
-            self.grid['x'] = (('nyp','nxp'), lonGrid)
-            self.grid.x.attrs['units'] = 'degrees_east'
-            self.grid['y'] = (('nyp','nxp'), latGrid)
-            self.grid.y.attrs['units'] = 'degrees_north'
+                    self.grid['x'] = (('nyp','nxp'), lonGrid)
+                    self.grid.x.attrs['units'] = 'degrees_east'
+                    self.grid['y'] = (('nyp','nxp'), latGrid)
+                    self.grid.y.attrs['units'] = 'degrees_north'
 
-            newGridCreated = True
+                    newGridCreated = True
 
         # Make a grid in the Stereographic projection (this should support north and south pole)
         if self.gridInfo['gridParameters']['projection']['name'] == "Stereographic":
-
-            dxUnits = self.getGridParameter('dxUnits', default='Error')
-            dyUnits = self.getGridParameter('dyUnits', default='Error')
 
             if dxUnits == "Error" or dyUnits == "Error":
                 msg = 'ERROR: Stereographic grid parameters, dx and/or dy, must be specified in degrees or meters.'
@@ -593,16 +681,70 @@ class GridUtils:
                 self.printMsg(msg, level=logging.ERROR)
                 return
 
-            # Units = meters
+            if gridType == 'MOM6':
+                # Units = meters
+                if dxUnits == 'meters':
+                    lonGrid, latGrid = self.generate_regional_spherical_meters(
+                        centerUnits, centerX, centerY,
+                        dx, dxUnits,
+                        dy, dyUnits,
+                        tilt,
+                        gridResolutionX, gridResolutionXUnits,
+                        gridResolutionY, gridResolutionYUnits,
+                        self.gridInfo['gridParameters']['projection'],
+                        gridType=gridType,
+                        gridMode=gridMode,
+                        ensureEvenI=ensureEvenI,
+                        ensureEvenJ=ensureEvenJ
+                    )
 
-            # Units = degrees
+                    if hasattr(lonGrid, 'shape'):
+                        # Adjust lonGrid to -180 to +180
+                        lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
 
+                        (nxp, nyp) = lonGrid.shape
+
+                        self.grid['x'] = (('nyp','nxp'), lonGrid)
+                        self.grid.x.attrs['units'] = 'degrees_east'
+                        self.grid['y'] = (('nyp','nxp'), latGrid)
+                        self.grid.y.attrs['units'] = 'degrees_north'
+
+                        newGridCreated = True
+                    
+                # Units = degrees
+                if dxUnits == 'degrees':
+                    msg = "WARNING: Spherical grids specified in degrees may not be conformal."
+                    self.printMsg(msg, level=logging.WARNING)
+                    
+                    lonGrid, latGrid = self.generate_regional_spherical_degrees(
+                        centerUnits, centerX, centerY,
+                        dx, dxUnits,
+                        dy, dyUnits,
+                        tilt,
+                        gridResolutionX, gridResolutionXUnits,
+                        gridResolutionY, gridResolutionYUnits,
+                        self.gridInfo['gridParameters']['projection'],
+                        gridType=gridType,
+                        gridMode=gridMode,
+                        ensureEvenI=ensureEvenI,
+                        ensureEvenJ=ensureEvenJ
+                    )
+
+                    if hasattr(lonGrid, 'shape'):
+                        # Adjust lonGrid to -180 to +180
+                        lonGrid = np.where(lonGrid > 180.0, lonGrid - 360.0, lonGrid)
+
+                        (nxp, nyp) = lonGrid.shape
+
+                        self.grid['x'] = (('nyp','nxp'), lonGrid)
+                        self.grid.x.attrs['units'] = 'degrees_east'
+                        self.grid['y'] = (('nyp','nxp'), latGrid)
+                        self.grid.y.attrs['units'] = 'degrees_north'
+
+                        newGridCreated = True
+                    
         # Make a grid in the North Polar Stereo projection
         if self.gridInfo['gridParameters']['projection']['name'] == "NorthPolarStereo":
-            if 'tilt' in self.gridInfo['gridParameters'].keys():
-                tilt = self.gridInfo['gridParameters']['tilt']
-            else:
-                tilt = 0.0
 
             lonGrid, latGrid = self.generate_regional_spherical(
                 self.gridInfo['gridParameters']['projection']['lon_0'], self.gridInfo['gridParameters']['dx'],
@@ -654,9 +796,9 @@ class GridUtils:
             # This projection only supports degrees at the moment
             try:
                 unsupported = False
-                if self.gridInfo['gridParameters']['dxUnits'] == 'meters':
+                if dxUnits == 'meters':
                     unsupported = True
-                if self.gridInfo['gridParameters']['dyUnits'] == 'meters':
+                if dyUnits == 'meters':
                     unsupported = True
                 if unsupported:
                     msg = 'ERROR: Lambert Conformal Conic grid parameters must be specified in degrees.'
@@ -716,12 +858,20 @@ class GridUtils:
             self.xrOpen = True
 
             # Compute grid metrics
-            self.computeGridMetrics()
+            if gridType == 'MOM6':
+                if gridMode == 2:
+                    self.computeGridMetrics()
+                else:
+                    msg = "NOTE: Grid metrics were not computed."
+                    self.printMsg(msg, level=logging.INFO)
+        else:
+            msg = "WARNING: Grid generation failed."
+            self.printMsg(msg, level=logging.WARNING)
                                 
-    # Original functions provided by Niki Zadeh
+    # Original grid generation functions provided by Niki Zadeh
 
     # Mercator
-    def rotate_u(x , y, z, ux, uy, uz, theta):
+    def rotate_u(self, x , y, z, ux, uy, uz, theta):
         """Rotate by angle θ around a general axis (ux,uy,uz)."""
         c=np.cos(theta)
         s=np.sin(theta)
@@ -750,27 +900,27 @@ class GridUtils:
         zp= r31*x+r32*y+r33*z
         return xp,yp,zp
 
-    def rotate_u_mesh(lam, phi, ux, uy, uz, theta):
+    def rotate_u_mesh(self, lam, phi, ux, uy, uz, theta):
         #Bring the angle to be in [-pi,pi] so that atan2 would work
-        lam=np.where(lam>180,lam-360,lam)
+        lam = np.where(lam>180,lam-360,lam)
         #Change to Cartesian coord
-        x,y,z=pol2cart(lam,phi)
+        x,y,z = self.pol2cart(lam,phi)
         #Rotate
-        xp,yp,zp=rotate_u(x,y,z,ux,uy,uz,theta)
+        xp,yp,zp = self.rotate_u(x,y,z,ux,uy,uz,theta)
         #Change back to polar coords using atan2, in [-pi,pi]
-        lamp,phip=cart2pol(xp,yp,zp)
+        lamp,phip = self.cart2pol(xp,yp,zp)
         #Bring the angle back to be in [0,2*pi]
-        lamp=np.where(lamp<0,lamp+360,lamp)
+        lamp = np.where(lamp<0,lamp+360,lamp)
         return lamp,phip
 
-    def generate_rotated_grid(lon0, lon_span, lat0, lat_span, tilt, refine):
+    def generate_rotated_grid(self, lon0, lon_span, lat0, lat_span, tilt, refine):
         Ni = int(lon_span*refine)
         Nj = int(lat_span*refine)
 
         #Generate a mesh at equator centered at (lon0, lat0)
-        lam_,phi_ = generate_latlon_mesh_centered(Ni,Nj,lon0,lon_span,lat0,lat_span)
-        ux,uy,uz=pol2cart(lon0,lat0)
-        lam_,phi_=rotate_u_mesh(lam_,phi_, ux,uy,uz, tilt*PI_180)  #rotate mesh around u by theta
+        lam_,phi_ = self.generate_latlon_mesh_centered(Ni,Nj,lon0,lon_span,lat0,lat_span)
+        ux,uy,uz  = self.pol2cart(lon0,lat0)
+        lam_,phi_ = self.rotate_u_mesh(lam_,phi_, ux,uy,uz, tilt*self.PI_180)  #rotate mesh around u by theta
         return lam_,phi_
 
     # Lambert Conformal Conic and Stereographic grids
@@ -881,8 +1031,16 @@ class GridUtils:
         lamp      = np.where(lamp<0, lamp+360, lamp)
         return lamp,phip
 
-    def generate_latlon_mesh_centered(self, lni, lnj, llon0, llen_lon, llat0, llen_lat, ensure_nj_even=True):
+    #def generate_latlon_mesh_centered(self, lni, lnj, llon0, llen_lon, llat0, llen_lat, ensure_nj_even=True):
+    def generate_latlon_mesh_centered(self, lni, lnj, llon0, llen_lon, llat0, llen_lat, **kwargs):
         """Generate a regular lat-lon grid"""
+        ensure_ni_even = True
+        ensure_nj_even = True
+        if 'ensureEvenI' in kwargs.keys():
+            ensure_ni_even = kwargs['ensureEvenI']
+        if 'ensureEvenJ' in kwargs.keys():
+            ensure_nj_even = kwargs['ensureEvenJ']
+        
         if llat0 == 0.0:
             msg = 'Generating regular lat-lon grid centered at (%.2f, %.2f) on equator.' % (llon0, llat0)
         else:
@@ -890,6 +1048,7 @@ class GridUtils:
         self.printMsg(msg, level=logging.INFO)
         llonSP = llon0 - llen_lon/2 + np.arange(lni+1) * llen_lon/float(lni)
         llatSP = llat0 - llen_lat/2 + np.arange(lnj+1) * llen_lat/float(lnj)
+        # TODO: add ensure_ni_even to clip columns
         if(llatSP.shape[0]%2 == 0 and ensure_nj_even):
             msg = "   The number of j's is not even. Fixing this by cutting one row at south."
             self.printMsg(msg, level=logging.INFO)
@@ -927,19 +1086,158 @@ class GridUtils:
 
         return lam_,phi_
 
-    # Grid generation functions
-    def generate_regional_mercator(self, lon0, lon_span, lat0, lat_span, tilt, gRes, gMode):
-        """Generate a regional grid centered at (lon0, lat0) with spans of (lon_span, lat_span) and tilted by angle tilt"""
-        Ni = int(lon_span / gRes)
-        Nj = int(lat_span / gRes)
-        if gMode == 2:
-            # Supergrid requested
-            Ni = Ni * 2
-            Nj = Nj * 2
+    # Similar to Niki's generate_rotated_grid function
+    #def generate_regional_mercator(self, lon0, lon_span, lat0, lat_span, tilt, gRes, gMode):
+    def generate_regional_mercator(self, cUnits, cX, cY, dx, dxU, dy, dyU, tilt, grX, grXU, grY, grYU, pD, **kwargs):
+        """Generate a regional mercator grid centered at (cX, cY) with spans of (dx, dy) with resolution (grX, grY) and tilted by angle tilt"""
+        
+        gType = None
+        if 'gridType' in kwargs.keys():
+            gType = kwargs['gridType']
 
-        # Generate a mesh centered at (lon0, lat0)
-        lam_,phi_ = self.generate_latlon_mesh_centered(Ni, Nj, lon0, lon_span, lat0, lat_span)
+        lam_ = None
+        phi_ = None
+            
+        if gType == "MOM6":
+            ensureEvenI = True
+            ensureEvenJ = True
+            if 'ensureEvenI' in kwargs.keys():
+                ensureEvenI = kwargs['ensureEvenI']
+            if 'ensureEvenJ' in kwargs.keys():
+                ensureEvenJ = kwargs['ensureEvenJ']
 
+            Ni = int(dx / grX)
+            Nj = int(dy / grY)
+
+            gMode = 1
+            if 'gridMode' in kwargs.keys():
+                gMode = kwargs['gridMode']
+            if gMode == 2:
+                # Supergrid requested
+                Ni = Ni * 2
+                Nj = Nj * 2
+
+            # Generate a mesh centered at (lon0, lat0) -> (cX, cY)
+            #lam_,phi_ = self.generate_latlon_mesh_centered(Ni, Nj, lon0, lon_span, lat0, lat_span)
+            lam_,phi_  = self.generate_latlon_mesh_centered(Ni, Nj, cX, dx, cY, dy, ensureEvenI=ensureEvenI, ensureEvenJ=ensureEvenJ)
+            ux, uy, uz = self.pol2cart(cX, cY)
+            # Rotate mesh around u by theta
+            lam_,phi_  = self.rotate_u_mesh(lam_, phi_, ux, uy, uz, tilt*self.PI_180)
+
+        if not(hasattr(lam_, 'shape')):
+            msg = 'ERROR: Failed to create mercator grid!'
+            self.printMsg(msg, level=logging.ERROR)
+            
+        return lam_,phi_
+
+    # Rebuilt grid generation routines
+    
+    def generate_regional_spherical_meters(self, cUnits, cX, cY, dx, dxU, dy, dyU, tilt, grX, grXU, grY, grYU, pD, **kwargs):
+        '''Create a grid in the spherical projection using grid distances in meters.'''
+
+        gType = None
+        if 'gridType' in kwargs.keys():
+            gType = kwargs['gridType']
+
+        lam_ = None
+        phi_ = None
+        
+        if gType == "MOM6":
+            ensureEvenI = True
+            ensureEvenJ = True
+            if 'ensureEvenI' in kwargs.keys():
+                ensureEvenI = kwargs['ensureEvenI']
+            if 'ensureEvenJ' in kwargs.keys():
+                ensureEvenJ = kwargs['ensureEvenJ']
+            
+            PROJSTRING = "+proj=stere"
+            if 'lat_0' in pD.keys():
+                PROJSTRING = "%s +lat_0=%f" % (PROJSTRING, pD['lat_0'])
+            if 'lat_ts' in pD.keys():
+                PROJSTRING = "%s +lat_ts=%f" % (PROJSTRING, pD['lat_ts'])
+            if 'ellps' in pD.keys():
+                PROJSTRING = "%s +ellps=%s" % (PROJSTRING, pD['ellps'])
+            if 'R' in pD.keys():
+                PROJSTRING = "%s +R=%f" % (PROJSTRING, pD['R'])
+
+            msg = 'Transformation proj string(%s)' % (PROJSTRING)
+            self.printMsg(msg, level=logging.INFO)                
+
+            # create the coordinate reference system
+            crs = CRS.from_proj4(PROJSTRING)
+            # create the projection from lon/lat to x/y
+            proj = Transformer.from_crs(crs.geodetic_crs, crs)
+
+            # compute (y, x) from (lon, lat)
+            gX, gY = proj.transform(cX, cY)
+            msg = 'Computing center point in meters: (%f, %f) to (%f, %f)' % (cY, cX, gX, gY)
+            self.printMsg(msg, level=logging.INFO)                
+
+            gMode = 1
+            if 'gridMode' in kwargs.keys():
+                gMode = kwargs['gridMode']
+            if gMode == 2:
+                # Supergrid requested
+                grX = grX / 2.0
+                grY = grY / 2.0
+
+            # Grid is centered on gX, gY
+            # gX - halfDX to gX + halfDX increments of grX
+            # gY - halfDY to gY + halfDY increments of grY
+            # Due to the way ranges work in python, we have to add another increment
+            # to the end to ensure we have the point that includes what we need.
+            halfDX = dx / 2.0
+            halfDY = dy / 2.0
+
+            x = np.arange(gX - halfDX, (gX + halfDX) + grX, grX, dtype=np.float32)
+            y = np.arange(gY - halfDY, (gY + halfDY) + grY, grY, dtype=np.float32)
+
+            yy, xx = np.meshgrid(y, x)
+
+            # compute (y, x) from (lon, lat)
+            lon, lat = proj.transform(yy, xx, direction='INVERSE')
+
+            lam_ = lon
+            phi_ = lat
+        
+        return lam_,phi_
+
+    def generate_regional_spherical_degrees(self, cUnits, cX, cY, dx, dxU, dy, dyU, tilt, grX, grXU, grY, grYU, pD, **kwargs):
+        '''Create a grid in the spherical projection using grid distances in degrees.'''
+        
+        gType = None
+        if 'gridType' in kwargs.keys():
+            gType = kwargs['gridType']
+
+        lam_ = None
+        phi_ = None
+        
+        if gType == "MOM6":
+            ensureEvenI = True
+            ensureEvenJ = True
+            if 'ensureEvenI' in kwargs.keys():
+                ensureEvenI = kwargs['ensureEvenI']
+            if 'ensureEvenJ' in kwargs.keys():
+                ensureEvenJ = kwargs['ensureEvenJ']
+
+            Ni = int(dx / grX)
+            Nj = int(dy / grY)
+
+            gMode = 1
+            if 'gridMode' in kwargs.keys():
+                gMode = kwargs['gridMode']
+            if gMode == 2:
+                # Supergrid requested
+                Ni = Ni * 2
+                Nj = Nj * 2
+                
+            # Generate a mesh at equator centered at (lon0, 0)
+            lam_,phi_ = self.generate_latlon_mesh_centered(Ni, Nj, cX, dx, 0.0, dy)
+            lam_,phi_ = self.rotate_z_mesh(lam_, phi_, (90.-cX)*self.PI_180)   #rotate around z to bring it centered at y axis
+            lam_,phi_ = self.rotate_y_mesh(lam_, phi_, tilt*self.PI_180)       #rotate around y axis to tilt it as desired
+            lam_,phi_ = self.rotate_x_mesh(lam_, phi_, cY*self.PI_180)         #rotate around x to bring it centered at (lon0,lat0)
+            lam_,phi_ = self.rotate_z_mesh(lam_, phi_, -(90.-cX)*self.PI_180)  #rotate around z to bring it back
+        
         return lam_,phi_
 
     # xarray Dataset operations
@@ -1069,7 +1367,6 @@ class GridUtils:
         if not(plotProjection):
             msg = "Please set the plot 'projection' parameter 'name'"
             self.printMsg(msg, level=logging.ERROR)
-            #warnings.warn("Please set the plot 'projection' parameter 'name'")
             return (None, None)
 
         # initiate new plot, infer projection within the plotting procedure
@@ -1097,6 +1394,10 @@ class GridUtils:
             crs = cartopy.crs.NearsidePerspective(central_longitude=central_longitude,
                 central_latitude=central_latitude, satellite_height=satellite_height)
         if plotProjection == 'Stereographic':
+            if central_latitude not in (-90., 90.):
+                msg = "ERROR: Stereographic projection requires lat_0 to be +90.0 or -90.0 degrees."
+                self.printMsg(msg, level=logging.ERROR)
+                return (None, None)
             crs = cartopy.crs.Stereographic(central_longitude=central_longitude,
                 central_latitude=central_latitude, true_scale_latitude=true_scale_latitude)
         if plotProjection == 'NorthPolarStereo':
@@ -1125,8 +1426,15 @@ class GridUtils:
         title = self.getPlotParameter('title', default=None)
         if title:
             ax.set_title(title)
-        nj = self.grid.dims['nyp']
-        ni = self.grid.dims['nxp']
+            
+        try:
+            nj = self.grid.dims['nyp']
+            ni = self.grid.dims['nxp']
+        except:
+            msg = "ERROR: Unable to plot.  Missing grid dimensions."
+            self.printMsg(msg, level=logging.ERROR)
+            return (None, None)
+
         plotAllVertices = self.getPlotParameter('showGridCells', default=False)
         iColor = self.getPlotParameter('iColor', default='k')
         jColor = self.getPlotParameter('jColor', default='k')
@@ -1182,6 +1490,8 @@ class GridUtils:
         if gkey in self.gridInfo['gridParameterKeys']:
             return self.gridInfo['gridParameters'][gkey]
         
+        msg = "WARNING: Using (%s) for default parameter for (%s)." % (default, gkey)
+        self.printMsg(msg, level=logging.DEBUG)
         return default
         
     def setGridParameters(self, gridParameters, subKey=None):
@@ -1292,7 +1602,7 @@ class GridUtils:
         
            To access dictionary values in projection, use the subKey argument.
         '''
-        
+
         # Top level subkey access
         if subKey:
             if subKey in self.gridInfo['plotParameterKeys']:
@@ -1303,11 +1613,13 @@ class GridUtils:
                     msg = "Attempt to use a subkey(%s) which is not really a subkey? or maybe it should be?" % (subKey)
                     self.printMsg(msg, level=logging.WARNING)
             return default
-        
+
         # Top level key access
         if pkey in self.gridInfo['plotParameterKeys']:
             return self.gridInfo['plotParameters'][pkey]
-        
+
+        msg = "WARNING: Using (%s) for default plot parameter for (%s)." % (default, pkey)
+        self.printMsg(msg, level=logging.DEBUG)
         return default
 
     def resetPlotParameters(self):
@@ -1315,7 +1627,7 @@ class GridUtils:
         # Need to use .copy on plotParameterDefaults or we get odd results
         self.gridInfo['plotParameters'] = self.plotParameterDefaults.copy()
         self.gridInfo['plotParameterKeys'] = self.gridInfo['plotParameters'].keys()
-    
+
     def showPlotParameters(self):
         """Show current plot parameters."""
         if len(self.gridInfo['plotParameterKeys']) > 0:
@@ -1324,7 +1636,7 @@ class GridUtils:
                 self.printMsg("%20s: %s" % (k,self.gridInfo['plotParameters'][k]), level=logging.INFO)
         else:
             self.printMsg("No plot parameters found.", level=logging.INFO)
-    
+
     def setPlotParameters(self, plotParameters, subKey=None):
         """A generic method for setting plotting parameters using dictionary arguments.
 
