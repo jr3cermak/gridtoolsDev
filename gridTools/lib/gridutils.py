@@ -38,6 +38,8 @@ class GridUtils:
         self.msgBox = None
         # Private variables begin with a _
         # Grid parameters
+        # Locals
+        self.gridMade = False
         self.gridInfo = {}
         self.gridInfo['dimensions'] = {}
         self.gridInfo['gridParameters'] = {}
@@ -1325,7 +1327,9 @@ class GridUtils:
         '''
         if filename:
             self.xrFilename = filename
-            
+            if self.grid.x.attrs['units'] == 'degrees_east':
+                self.grid.x.values = np.where(self.grid.x.values>180, self.grid.x.values-360, self.grid.x.values)
+            self.grid.to_netcdf(self.xrFilename, encoding=self.removeFillValueAttributes())
         try:
             self.grid.to_netcdf(self.xrFilename, encoding=self.removeFillValueAttributes())
             msg = "Successfully wrote netCDF file to %s" % (self.xrFilename)
