@@ -427,71 +427,162 @@ class App:
 
         pageMain = pn.WidgetBox('''
         # Instructions
-        This will be the eventual location for the instruction manual for this application.  Information
-        found here will mostly pertain to the operation of this application.  Additional details about
+        This is the instruction manual for the application portion of the grid tool library.  Information
+        here focus on the operation of this application.  Additional details about
         the MOM6 model can be found in the [MOM6 User Manual](https://mom6.readthedocs.io/){target="_blank"}.
-        
+        Additional information about the operation of the grid tool library can be found in the
+        [manual](https://github.com/ESMG/gridtools/blob/main/docs/manual/GridUtils.md){target="_blank"}.
+        # Information
+        Some actions of the application will produce information that will be displayed in the "Information"
+        window above.  The window can be cleared by clicking the "Clear Information" button.  If "Logging" is
+        enabled, all information in that window are kept.
+        # Tabs
+        Access to this manual is broken into tabs and unfortunately cannot be hyperlinked together.  Major
+        tabs include "Plot", "Grid" and "Setup".
+        ## Plot
+        The plot tab controls how grids are shown in the "Grid Plot" tab.  Controls include "Projection",
+        "Extent" and "Style".  Please see the application manual tab called "Plot" for more information.
+        ## Grid
+        The grid tab controls how grids are created.  Controls include "Center", "Projection", "Spacing",
+        and "Advanced".  Please see the application manual tab called "Grid".
+        ## Setup
+        The setup tab allows control over "Logging" and other preferences specific to the application.
         ''', width=self.plotWidgetWidth)
 
-        pageGrids = pn.WidgetBox('''
-        # Grids
-        ***We love grids!***
-        ## Grid Reference
-        This controls how the grid is grown from the selected latitude (lat0) and longitude (lon0) using
-        degrees or x (x0) or y (y0) using meters.  By default, the grid is grown from the center point
-        in both directions based on the size (dy, dx) and grid resolution.  For now, dy and dx can only
-        operate in degrees.  In the future, grids may be build with other fixed points of reference.
+        pagePlot = pn.WidgetBox('''
+        # Plot
+        This tab explains the controls for plotting grids.
+        ## Projection
+        **Projection**: The plot projection may be different than the grid projection. In most cases, the plot
+        and grid projection is the same to demonstrate conformality of the generated grid.
 
-        ## Grid Type
+        **Central Longitude**: lon_0 defines the central longitude or central meridian for plotting.  The plot
+        is centered over this longitude.  The plot extent may change the view of the plot.  For example,
+        for the spherical plots will line up with the selected longitude.
+
+        **Central Latitude**: lat_0 defines the central latitude or latitude of origin for plotting.  The
+        plot extent may change the view of the plot.
+
+        **First Parallel**: lat_1 defines the first standard parallel used for Lambert Conformal Conic
+        projections.
+
+        **Second Parallel**: lat_2 defines the second standard parallel used for Lambert Conformal Conic
+        projections.
+
+        **Latitude of True Scale**: lat_ts defines the latitude where scale is not distorted.  This
+        is used in Lambert Conformal Conic and Mercator.  If this setting is used with the scale
+        factor (k_0), lat_ts takes precedence.
+
+        **NOTE**: Other projection options described have not been implemented yet.
+
+        ## Extent
+        This controls the plot extent in degrees which may override plotting grids over its
+        center point.  A checkbox is provided to override the extent parameters and provide
+        a global view for the plot.
+
+        ## Style
+        This allows some limited changes to the plot style and how to show the grid or grid cells.
+
+        **Plot title**: A title in this text box will be shown on the "Grid Plot".
+
+        **Grid Style**: The grid style tells the plot to just show the grid, show the grid cells or
+        show the supergrid cells.
+
+        **x Color**: For a non-rotated grid, this is the j direction color of the grid line.
+        
+        **y Color**: For a non-rotated grid, this is the i direction color of the grid line.
+
+        **x Line Width**: This is the width in points (1/72 of an inch).  The default width is
+        one (1) point.  For super dense grids, using 1/10th (0.1) of a point may show the
+        grid with a semiopaque plot.  This is the width of grid lines in the j direction.
+
+        **y Line Width**: This is the width of grid lines in the i direction.
+
+        ''', width=self.plotWidgetWidth)
+
+        pageGrid = pn.WidgetBox('''
+        # Grid
+        This contains several controls that affect how the grid is generated.
+        ## Center
+        **Grid Center(X)** and **Grid Center(Y)** are specified in degrees.  This is the absolute center of
+        the grid to be generated.  Other controls define grid size and resolution which determines
+        how many grid points are generated.
+
+        ## Projection
+        These are the same controls as found for the plot projection except they affect the grid
+        generation. The additional control is **Tilt** which controls the tilt of the generated
+        grid.  The grid rotation is specified in degrees and the rotation is clockwise.
+
+        ## Spacing
+        These are the primary controls for controlling the number of grid points in the
+        generated grid.
+
+        **dx**: is the total grid distance along the j direction.  Please select the proper
+        **dx Units** in degrees or meters.
+
+        **dy**: is the total grid distance along the i direction.  Please select the proper
+        **dy Units** in degrees or meters.
+
+        **Grid Resoloution(X)**: This is the distance of individual grid cells in the j direction.
+        Please select the proper *Grid Resolution Units(X)* in degrees or meters.
+
+        **Grid Resoloution(Y)**: This is the distance of individual grid cells in the i direction.
+        Please select the proper *Grid Resolution Units(X)* in degrees or meters.
+
+        ## Advanced
+
+        ### Grid Reference
+        This controls how the grid is grown from the selected latitude (Center Y) and longitude (Center X) using
+        degrees or meters.  By default, the grid is grown from the center point
+        in both directions based on the size (dy, dx) and grid resolution.
+        In the future, grids may be build with other fixed points of reference.
+
+        ### Grid Type
         For now, only MOM6 is supported.  Other grid types may be possible in the future.
 
-        ## Grid Mode
-        Internally, this mode is 2 which really means computations
-        are done to compute vertices for the grid cells and vertices through the center points of the
+        ### Grid Mode
+        For MOM6 grids, mode is 2 requests generation of the supergrid.
+        This computes vertices for the grid cells and vertices through the center points of the
         grid cells.  At present, this mode should not be anything other than 2 for MOM6 grids.
 
-        ## Grid Representation
-        Here is a representation of a (2, 3) MOM6 grid adapted from convert_ROMS_grid_to_MOM6.py
-        by Mehmet Ilicak and Alistair Adcroft.  NOTE: The MOM6 supergrid is (5, 7) in shape.
+        **Grid Representation**
 
-        ```text
-          G SG
-             5 + | + | + | +
-          2  4 - p - p - p -
-             3 + | + | + | +
-          1  2 - p - p - p -
-             1 + | + | + | +
-                 1   2   3    G
-               1 2 3 4 5 6 7  SG
+        Additional details of the
+        [MOM6](https://github.com/ESMG/gridtools/blob/main/docs/grids/MOM6.md){target="_blank"}
+        grid and
+        [MOM6/ROMS](https://github.com/ESMG/gridtools/blob/main/docs/grids/MOM6ROMS.md){target="_blank"}
+        grids can be found in the grid section of
+        the user manual.
+        ''', width=self.plotWidgetWidth)
 
-        KEY: p = ROMS rho (center) points; also MOM6 h (center) points
-             + = ROMS psi (corner) points
-             - = ROMS u points
-             | = ROMS v points
-             G = grid points
-            SG = supergrid points
-        ```
+        pageSetup = pn.WidgetBox('''
+        # Setup
+        Please see the "Logging" tab for information about logging under the Setup tab.
 
-        A MOM6 grid of (ny, nx) will have (ny\*2+1, nx\*2+1) points on the supergrid.
-        NOTE: In python, array storage is zero based.  In the above example, supergrid 
-        point (1, 1) is stored in memory location (0, 0).
+        A python wrapper library, numpypi, has been written to provide bitwise-the-same computations
+        for some of the numpy math functions.  NOTE: This feature has not been implemented.
         ''', width=self.plotWidgetWidth)
 
         pageLogging = pn.WidgetBox('''
         # Logging
-        The logging mechanism in this application and GridUtils() is slightly complex.  For messages
-        emitted to the "Information" panel or using iterative means, you can control the amount of 
-        detail presented to you or logged in a file.  The logging levels from low to high are: NOTSET, 
-        DEBUG, INFO, WARNING, ERROR and CRITICAL.  The level set means only messages of that level or higher
-        will be shown or logged.  If you want to see all available detail, use NOTSET.  NOTE: The detail sent
-        to the "Information" window by default is INFO or higher.  The detail sent to a log file, if enabled,
-        is WARNING or higher.  The function for emitting messages is `GridUtils.printMsg()`.
-        # Log file
-        You can only change the log file name or delete the log file when the logging system is disabled.
-        To assist the software developers, we request that you provide a log file of activity to help us
-        discover problems with the code.  The log file will continue to grow over time.  It is a good idea
-        to periodically erase the log file.
-        # Debug level
+
+        Please see the user manual for more information about
+        [logging](https://github.com/ESMG/gridtools/blob/main/docs/manual/Logging.md){target="_blank"}.
+
+        **Log filename**: is the filename in which informational messages are saved.
+
+        **Erase log file**: this button may be used to periodically erase the log file for the saving of
+        log information.
+
+        **Log level**: For messages emitted to the "Information" panel or using iterative means, you can
+        control the amount of detail presented to you or logged in a file.  The logging levels from
+        low to high are: NOTSET, DEBUG, INFO, WARNING, ERROR and CRITICAL.  The level set means only
+        messages of that level or higher will be shown or logged.  If you want to see all available
+        detail, use NOTSET.  NOTE: The detail sent to the "Information" window by default is INFO or
+        higher.  The detail sent to a log file, if enabled, is WARNING or higher.  The function for
+        emitting messages is `GridUtils.printMsg()`.
+
+        **Debug level**:
         This is a special feature mainly for developers.  If you are planning to "hack" this code, you can
         utilize this feature to assist with debugging existing or new code.  The available debug levels
         do not operate like the logging levels.  For operational use, the debug level is usually OFF.  You
@@ -518,7 +609,9 @@ class App:
 
         manualTabs.extend([
             ('Main', pageMain),
-            ('Grids', pageGrids),
+            ('Plot', pagePlot),
+            ('Grid', pageGrid),
+            ('Setup', pageSetup),
             ('Logging', pageLogging),
             ('Numpypi', pageNumpyPi),
         ])
@@ -656,6 +749,7 @@ class App:
         self.debugLevelControl = pn.widgets.Select(name='Debug level', options=self.debugLevelNames, value=self.debugLevelNames[0])
         self.debugLevelControl.param.watch(self.debugLevelCallback, 'value')
         self.enableNumpyPiControl = pn.widgets.Checkbox(name="Enable numpypi bitwise-the-same")
+        self.enableNumpyPiControl.disabled = True
 
     def deleteLogfile(self, event):
         '''This function is called as a result of pushing the "Erase logfile" button in the application.
@@ -778,7 +872,7 @@ class App:
         # numpypi
         See Manual tab "Numpypi" for more information.
 
-        NOTE: This control does not do anything yet!
+        NOTE: This control does not do anything yet and is disabled.
         ''',
                 self.enableNumpyPiControl)
 

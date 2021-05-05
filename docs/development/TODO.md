@@ -147,3 +147,14 @@
  - [ ] Add a notebook or two that demonstrates some of the esoteric API
        features of the library: help, debugging, etc.
  - [ ] Dask optimizations
+ - [ ] Pull in BC and forcing fields from various sources
+   - [ ] Delta method: "We extract 20-30 years of a future projection from several models, build an average of each forcing variable which we superpose on modern day climate.  It’s the so-called delta method.  It debiases climate projections relative to modern day (reanalysis constrained) dynamics, but adds the climate change signal on top of it (as a secular change/delta)."
+   - [ ] CMIP/ESM
+     - [ ] Browser catalog: https://esgf-node.llnl.gov/search/cmip6/
+     - [ ] Programmatic access: https://github.com/intake/intake-esm
+     - [ ] http://gallery.pangeo.io/repos/pangeo-gallery/cmip6/
+     - [ ] https://github.com/aradhakrishnanGFDL/gfdl-aws-analysis/tree/master/examples
+     - [ ] https://github.com/aradhakrishnanGFDL/gfdl-aws-analysis/tree/master/esm-collection-spec-examples
+     - [ ] https://github.com/MackenzieBlanusa/OHC_CMIP6
+     - [ ] https://github.com/xarray-contrib/cf-xarray
+     - [ ] https://github.com/jbusecke/cmip6_preprocessing

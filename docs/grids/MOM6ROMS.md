@@ -42,3 +42,28 @@
 #
 #         1   2   3   4
 ```
+
+Here is a representation of a (2, 3) MOM6 grid adapted from convert_ROMS_grid_to_MOM6.py
+by Mehmet Ilicak and Alistair Adcroft.  NOTE: The MOM6 supergrid is (5, 7) in shape.
+
+```text
+  G SG
+     5 + | + | + | +
+  2  4 - p - p - p -
+     3 + | + | + | +
+  1  2 - p - p - p -
+     1 + | + | + | +
+         1   2   3    G
+       1 2 3 4 5 6 7  SG
+
+KEY: p = ROMS rho (center) points; also MOM6 h (center) points
+     + = ROMS psi (corner) points
+     - = ROMS u points
+     | = ROMS v points
+     G = grid points
+    SG = supergrid points
+```
+
+A MOM6 grid of (ny, nx) will have (ny\*2+1, nx\*2+1) points on the supergrid.
+NOTE: In python, array storage is zero based.  In the above example, supergrid
+point (1, 1) is stored in memory location (0, 0).

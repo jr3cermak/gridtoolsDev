@@ -1,6 +1,19 @@
 # Change Log
 
+# 2021-05-05
+
+ - This day in history.  SpaceX launches and lands starship prototype number 15.
+ - Add wish list task for delta method import of boundary conditions and forcing fields.
+ - Add/update documentation for the application.
+
 # 2021-05-04
+
+ - Merge PR#1 into robTest
+   - Provide user with more descriptive plotting failure whether it is due to a non-existent grid or really a plotting error.
+   - Add errorNoGridFigure().
+   - Move coordinates of existing message on plot.
+   - Add self.gridMode flag to GridUtils()
+   - Upon use of saveGrid() adjust x in grids from 0,360 to -180,+180
 
  - Still some rough edges to clean up.
    - One more pass at the application and application documentation
