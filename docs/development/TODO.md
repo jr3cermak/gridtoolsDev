@@ -8,12 +8,12 @@
    - [X] Generify current examples
    - [X] Test examples for LCC grid generation
    - [X] Test examples for regular Mercator grid generation
-   - [ ] Test examples for stereographic grid generation
+   - [X] Test examples for stereographic grid generation
    - [X] Test application for LCC grid generation
    - [X] Test application for regular Mercator grid generation
    - [X] Test application for stereographic grid generation
    - [X] Tackle critical TODO items
-   - [ ] Publish initial commit to ESMG
+   - [X] Publish initial commit to ESMG
    - [ ] Ensure mybinder.org works with the published github commit
  - [ ] Version 0.2
    - [ ] Estabish sphinx document generator and link to readthedocs

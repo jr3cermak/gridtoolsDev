@@ -15,6 +15,8 @@
  - Add information to examples/README.md
  - BUG(app): x/y color and line controls are swapped FIXED
  - app: adjusted grid resolution to take larger numbers.
+ - app: erase debug cell at the bottom of mkGridInteractive.ipynb
+ - publish to ESMG:dev branch and test mybinder.org
 
 # 2021-05-05
 
