@@ -300,12 +300,12 @@ class App:
                     'ellps': 'WGS84'
                 },
                 'extent': plotExtentState,
-                'iLinewidth': self.plotXLineWidth.value,
-                'jLinewidth': self.plotYLineWidth.value,
+                'iLinewidth': self.plotYLineWidth.value,
+                'jLinewidth': self.plotXLineWidth.value,
                 'showGridCells': showGridCellsState,
                 'title': mp_title,
-                'iColor': self.plotColorDict[self.plotXColor.value],
-                'jColor': self.plotColorDict[self.plotYColor.value]
+                'iColor': self.plotColorDict[self.plotYColor.value],
+                'jColor': self.plotColorDict[self.plotXColor.value]
             }
         )
         
@@ -633,8 +633,8 @@ class App:
         self.gridProjection = pn.widgets.Select(name='Projection', options=self.projNames, value=self.projNames[1])
         self.gridType = pn.widgets.Select(name="Grid Type", options=self.gridTypes, value=self.gridTypes[0])
         self.gridType.disabled = True
-        self.gridResolutionX = pn.widgets.Spinner(name="Grid Resolution(X)", value=1.0, step=0.1, start=0.0, end=10000.0, width=80)
-        self.gridResolutionY = pn.widgets.Spinner(name="Grid Resolution(Y)", value=1.0, step=0.1, start=0.0, end=10000.0, width=80)
+        self.gridResolutionX = pn.widgets.Spinner(name="Grid Resolution(X)", value=1.0, step=0.1, start=0.0, end=1000000.0, width=100)
+        self.gridResolutionY = pn.widgets.Spinner(name="Grid Resolution(Y)", value=1.0, step=0.1, start=0.0, end=1000000.0, width=100)
         self.gridResolutionXUnits = pn.widgets.Select(name="Grid Resolution Units(X)", options=self.gridResolutionUnitNames, value=self.gridResolutionUnitNames[0])
         self.gridResolutionYUnits = pn.widgets.Select(name="Grid Resolution Units(Y)", options=self.gridResolutionUnitNames, value=self.gridResolutionUnitNames[0])
         self.gridMode = pn.widgets.Spinner(name="Grid Mode", value=2, step=1, start=1, end=2, width=80)
@@ -642,8 +642,8 @@ class App:
         self.unitNames = ['degrees', 'meters']
         self.dxUnits = pn.widgets.Select(name='dx Units', options=self.unitNames, value=self.unitNames[0])
         self.dyUnits = pn.widgets.Select(name='dy Units', options=self.unitNames, value=self.unitNames[0])
-        self.dx = pn.widgets.Spinner(name="dx", value=20, step=1, start=0, end=10000000, width=100)
-        self.dy = pn.widgets.Spinner(name="dy", value=30, step=1, start=0, end=10000000, width=100)
+        self.dx = pn.widgets.Spinner(name="dx", value=20.0, step=1.0, start=0.0, end=10000000, width=100)
+        self.dy = pn.widgets.Spinner(name="dy", value=30.0, step=1.0, start=0.0, end=10000000, width=100)
         self.glon0 = pn.widgets.Spinner(name="Central Longitude(lon_0) (0 to 360)", value=230.0, step=1.0, start=0.0, end=360.0, width=100)
         self.glat0 = pn.widgets.Spinner(name="Central Latitude(lat_0) (-90 to 90)", value=40.0, step=1.0, start=-90.0, end=90.0, width=100)
         self.glat1 = pn.widgets.Spinner(name="First Parallel(lat_1) (-90 to 90)", value=40.0, step=1.0, start=-90.0, end=90.0, width=100)

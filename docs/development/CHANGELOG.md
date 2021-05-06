@@ -2,6 +2,8 @@
 
 # 2021-05-06
 
+ - BUG(app): Stereographic grid generation does not work when dx/dy is not
+   evenly divisible by grid resolution. TODO
  - IBCAO grid exhausts memory on mybinder.org
    - Try to implement dask features in Example4a (incomplete)
  - Updated grid center text in application
@@ -9,8 +11,10 @@
  - Remove mkMapInteractive.ipynb
  - Fix metadata for IBCAO grid in Example 5 and 5a
  - Add jupyter-resource-usage to conda:xesmfTools
- - BUG(app): Add missing self on plotTitle
+ - BUG(app): Add missing self on plotTitle FIXED
  - Add information to examples/README.md
+ - BUG(app): x/y color and line controls are swapped FIXED
+ - app: adjusted grid resolution to take larger numbers.
 
 # 2021-05-05
 

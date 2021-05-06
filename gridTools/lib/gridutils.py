@@ -1465,10 +1465,12 @@ class GridUtils:
         # For a non conforming projection, we have to plot every line between the points of each grid box
         for i in range(0,ni+1,2):
             if (i == 0 or i == (ni-1)) or plotAllVertices:
-                ax.plot(self.grid['x'][:,i], self.grid['y'][:,i], iColor, linewidth=iLinewidth, transform=transform)
+                if i <= ni-1:
+                    ax.plot(self.grid['x'][:,i], self.grid['y'][:,i], iColor, linewidth=iLinewidth, transform=transform)
         for j in range(0,nj+1,2):
             if (j == 0 or j == (nj-1)) or plotAllVertices:
-                ax.plot(self.grid['x'][j,:], self.grid['y'][j,:], jColor, linewidth=jLinewidth, transform=transform)
+                if j <= nj-1:
+                    ax.plot(self.grid['x'][j,:], self.grid['y'][j,:], jColor, linewidth=jLinewidth, transform=transform)
 
         return f, ax
 

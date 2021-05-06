@@ -8,7 +8,7 @@
    - [X] Generify current examples
    - [X] Test examples for LCC grid generation
    - [X] Test examples for regular Mercator grid generation
-   - [X] Test examples for stereographic grid generation
+   - [ ] Test examples for stereographic grid generation
    - [X] Test application for LCC grid generation
    - [X] Test application for regular Mercator grid generation
    - [X] Test application for stereographic grid generation
@@ -46,7 +46,8 @@
      - [X] Mercator (angle_dx might be 0 as it is lined up along latitude lines; except for tilt?)
      - [X] Polar
    - [ ] make Lambert Conformal Conic Grids; needs testing
-     - [ ] LCC cannot take custom lat_1 and lat_2; it generates lat_1 and lat_2 based on grid inputs
+     - [ ] LCC cannot take custom lat_1 and lat_2; it generates 
+           lat_1 and lat_2 based on grid inputs.
      - [X] Update new lat_1 and lat_2 for application after makeGrid() is run
      - [ ] changing plot parameters lat_1 and lat_2 do not seem to impact the view
    - [ ] make Mercator grids; needs testing
@@ -115,6 +116,7 @@
    - [ ] enable user configurable plot and widget sizes (hardcoded in __init__)
    - [ ] enable user to change ellipsoid, R, x_0 and y_0 grid and plot parameters
    - [ ] plotting: adjust satellite_height, for now it is fixed to the default
+   - [ ] title is misleading; it should show the projections in use if different
  - [ ] Develop a GridUtils() function
    - [ ] Run `proj -le` and return the names or display the details
    - [ ] Populates the ellps field for the application
