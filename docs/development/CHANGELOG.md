@@ -1,5 +1,17 @@
 # Change Log
 
+# 2021-05-06
+
+ - IBCAO grid exhausts memory on mybinder.org
+   - Try to implement dask features in Example4a (incomplete)
+ - Updated grid center text in application
+ - Rename an example script to conform to mkGrids
+ - Remove mkMapInteractive.ipynb
+ - Fix metadata for IBCAO grid in Example 5 and 5a
+ - Add jupyter-resource-usage to conda:xesmfTools
+ - BUG(app): Add missing self on plotTitle
+ - Add information to examples/README.md
+
 # 2021-05-05
 
  - This day in history.  SpaceX launches and lands starship prototype number 15.

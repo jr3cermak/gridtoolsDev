@@ -50,16 +50,26 @@ grd.clearGrid()
 grd.setGridParameters({
     'projection': {
         'name': "Stereographic",
-        'ellps': "WGS84",
+        'ellps': 'WGS84',
         'R': 6378000.0,
         'lon_0': 0.0,
         'lat_0': 90.0,
         'lat_ts': 75.0,
-        'dx': 5000.0,
-        'dy': 5000.0,
-        'dxUnits': 'meters',
-        'dxUnits': 'meters'
-    }
+    },
+    'centerX': 0.0,
+    'centerY': 90.0,
+    'cneterUnits': 'degrees',
+    'dx': 5805000.0,
+    'dy': 5805000.0,
+    'dxUnits': 'meters',
+    'dyUnits': 'meters',
+    'gridResolution': 2500.0,
+    'gridResolutionUnits': 'meters',
+    'tilt': 0.0,
+    'gridMode': 2,
+    'gridType': 'MOM6',
+    'ensureEvenI': True,
+    'ensureEvenJ': True
 })
 grd.grid['x'] = (('nyp','nxp'), lon)
 grd.grid['y'] = (('nyp','nxp'), lat)
@@ -83,5 +93,8 @@ grd.setPlotParameters(
 )
 
 grd.computeGridMetrics()
+
+(figure, axes) = grd.plotGrid()
+figure.savefig('configs/test/IBCAO_Example5a_script.jpg')
 
 print(grd.grid)

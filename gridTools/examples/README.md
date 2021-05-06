@@ -12,3 +12,5 @@
  * [Rotate a grid using numpy](rotateMatrix.ipynb)
  * [Use xarray to view ROMS data via OpenDAP](xarrayRomsOpendap.ipynb)
  * [Use xarray to view GFS data via OpenDap](xarrayNcepOpendap.ipynb)
+ * [New grid flooding routine based on pyroms](newFlood.ipynb)
+ * [Plotting demo illustrating plotting data on the edge vs center grid points](plottingDemo.ipynb)

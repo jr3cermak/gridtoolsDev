@@ -9,10 +9,10 @@
    - [X] Test examples for LCC grid generation
    - [X] Test examples for regular Mercator grid generation
    - [X] Test examples for stereographic grid generation
-   - [ ] Test application for LCC grid generation
-   - [ ] Test application for regular Mercator grid generation
-   - [ ] Test application for stereographic grid generation
-   - [ ] Tackle critical TODO items
+   - [X] Test application for LCC grid generation
+   - [X] Test application for regular Mercator grid generation
+   - [X] Test application for stereographic grid generation
+   - [X] Tackle critical TODO items
    - [ ] Publish initial commit to ESMG
    - [ ] Ensure mybinder.org works with the published github commit
  - [ ] Version 0.2
@@ -20,6 +20,7 @@
    - [ ] Allow import of ROMS grid for conversion to MOM6
    - [ ] Enhanced grid/plot projection options
    - [ ] Explore the extent problem for lon defined as +0,+360 vs -180,+180
+   - [ ] Leverage dask (expecially for binder.org)
  - [ ] Verison 0.x
    - [ ] Bathymetry and boundery condition support
    - [ ] Grid filling options (flooding)
@@ -28,8 +29,9 @@
    - [ ] This library is installable via conda
 
 # BUGS
- - [ ] A nested dictionary will clobber other nested elements instead of updating elements.  Recode
-       `setPlotParameters` and `setGridParameters` to recursively update dictionary elements.
+ - [ ] A nested dictionary will clobber other nested elements instead
+       of updating elements.  Recode `setPlotParameters` and
+       `setGridParameters` to recursively update dictionary elements.
 
 # TASKS
 
@@ -129,6 +131,7 @@
 
 # WISH
 
+ - [ ] Add an activity spinner to indicate the notebook is busy
  - [ ] Compute angle_dy for testing of grid conformality.  Theoretically, we can do this check for all grid
        and supergrid cells.
  - [ ] tripolar grids: use FRE-NCtools via cython?
@@ -143,10 +146,12 @@
  - [ ] Refactor any grid math into a gridmath library.  Any grid computation that can stand on its own
        should be moved into a separate gridmath library.
  - [ ] gridtools::makeGrid() will need a refactor to work with other grid types
+ - [ ] write out all MOM6 ancillary files when writing a grid
  - [ ] refactor expansion/clipping of grid points when fitting grid
  - [ ] Add a notebook or two that demonstrates some of the esoteric API
        features of the library: help, debugging, etc.
  - [ ] Dask optimizations
+   - [ ] IBCAO grid is too big for mybinder.org
  - [ ] Pull in BC and forcing fields from various sources
    - [ ] Delta method: "We extract 20-30 years of a future projection from several models, build an average of each forcing variable which we superpose on modern day climate.  It’s the so-called delta method.  It debiases climate projections relative to modern day (reanalysis constrained) dynamics, but adds the climate change signal on top of it (as a secular change/delta)."
    - [ ] CMIP/ESM

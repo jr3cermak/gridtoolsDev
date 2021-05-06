@@ -6,6 +6,9 @@ The [design](../development/Design.md) for this library is to keep it
 simple and provide a variety of usage patterns.  Work is ongoing with a
 laundry list of [TODO](../development/TODO.md) items.
 
+This library currently returns a netCDF file that should be
+compatible with a typical `ocean_hgrid.nc` input file.
+
 # Under the hood
 
 The library makes use of xarray for input and output (IO).  Several
